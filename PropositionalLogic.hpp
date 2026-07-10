@@ -133,7 +133,7 @@ public:
     }
 
     consteval Q operator()(P) const { return PropBase::fetch<Q>; }
-    consteval P operator()(Q) requires (!std::same_as<P, Q>) const { return PropBase::fetch<P>; }
+    consteval P operator()(Q) const requires (!std::same_as<P, Q>) { return PropBase::fetch<P>; }
 
 private:
     friend class PropBase;
