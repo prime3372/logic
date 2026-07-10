@@ -63,8 +63,8 @@ public:
         auth = true;
     }
 
-    consteval P left() { return PropBase::fetch<P>; }
-    consteval Q right() { return PropBase::fetch<Q>; }
+    const P left = PropBase::fetch<P>;
+    const Q right = PropBase::fetch<Q>;
 
 private:
     friend class PropBase;

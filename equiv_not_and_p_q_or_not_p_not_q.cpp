@@ -18,8 +18,8 @@ consteval Equiv<Not<And<P, Q>>, Or<Not<P>, Not<Q>>> solve() {
         [&](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
             return [&](And<P, Q> and_p_q) -> False {
                 return or_not_p_not_q.elim(
-                    [&](Not<P> not_p) -> False { return not_p.elim(and_p_q.left()); },
-                    [&](Not<Q> not_q) -> False { return not_q.elim(and_p_q.right()); }
+                    [&](Not<P> not_p) -> False { return not_p.elim(and_p_q.left); },
+                    [&](Not<Q> not_q) -> False { return not_q.elim(and_p_q.right); }
                 );
             };
         }
