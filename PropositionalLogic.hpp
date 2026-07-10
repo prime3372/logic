@@ -5,17 +5,6 @@
 #include <cstddef>
 #include <type_traits>
 
-// 1. law of excluded middle
-// 2. principle of explosion
-// 3. ¬ intro
-// 4. ¬ elim
-// 5. ∧ intro
-// 6. ∧ elim
-// 7. ∨ intro
-// 8. ∨ elim
-// 9. → intro
-// 10. → elim
-
 class PropBase {
 protected:
     consteval PropBase() {}
@@ -35,7 +24,7 @@ public:
     }
 
     template <PropType P>
-    consteval P explode() const { return PropBase::fetch<P>; } // principle of explosion
+    consteval P explode() const { return PropBase::fetch<P>; }
 
 private:
     friend class PropBase;
@@ -47,7 +36,7 @@ private:
 template <PropType P>
 class Not final : public PropBase {
 public:
-    consteval Not(auto f) { // ¬ intro
+    consteval Not(auto f) {
         False q = f(PropBase::fetch<P>);
         auth = true;
     }
@@ -56,7 +45,7 @@ public:
         auth = true;
     }
 
-    consteval False elim(P) const { return PropBase::fetch<False>; } // ¬ elim
+    consteval False elim(P) const { return PropBase::fetch<False>; }
 
 private:
     friend class PropBase;
@@ -68,14 +57,14 @@ private:
 template <PropType P, PropType Q>
 class And final : public PropBase {
 public:
-    consteval And(P, Q) : auth(true) {} // ∧ intro
+    consteval And(P, Q) : auth(true) {}
     consteval And(const And& other) {
         if (!other.auth) throw; // prevent illegal construction
         auth = true;
     }
 
-    consteval P left() { return PropBase::fetch<P>; } // ∧ elim
-    consteval Q right() { return PropBase::fetch<Q>; } // ∧ elim
+    consteval P left() { return PropBase::fetch<P>; }
+    consteval Q right() { return PropBase::fetch<Q>; }
 
 private:
     friend class PropBase;
@@ -87,15 +76,15 @@ private:
 template <PropType P, PropType Q>
 class Or final : public PropBase {
 public:
-    consteval Or() requires std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>> : auth(true) {} // law of excluded middle
-    consteval Or(P) : auth(true) {} // ∨ intro
-    consteval Or(Q) requires (!std::same_as<P, Q>) : auth(true) {} // ∨ intro
+    consteval Or() requires std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>> : auth(true) {}
+    consteval Or(P) : auth(true) {}
+    consteval Or(Q) requires (!std::same_as<P, Q>) : auth(true) {}
     consteval Or(const Or& other) {
         if (!other.auth) throw; // prevent illegal construction
         auth = true;
     }
 
-    consteval auto elim(auto f, auto g) const { // ∨ elim
+    consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::fetch<P>));
         auto rg(g(PropBase::fetch<Q>));
         if (!std::same_as<decltype(rf), decltype(rg)>) throw; // the return types of f and g must be the same
@@ -112,7 +101,7 @@ private:
 template <PropType P, PropType Q>
 class Impl final : public PropBase {
 public:
-    consteval Impl(auto f) { // → intro
+    consteval Impl(auto f) {
         Q q = f(PropBase::fetch<P>);
         auth = true;
     }
@@ -121,7 +110,7 @@ public:
         auth = true;
     }
 
-    consteval Q operator()(P p) const { return PropBase::fetch<Q>; } // → elim
+    consteval Q operator()(P) const { return PropBase::fetch<Q>; }
 
 private:
     friend class PropBase;
@@ -131,7 +120,27 @@ private:
 };
 
 template <PropType P, PropType Q>
-using Equiv = And<Impl<P, Q>, Impl<Q, P>>;
+class Equiv final : public PropBase {
+public:
+    consteval Equiv(auto f, auto g) {
+        Q q = f(PropBase::fetch<P>);
+        P p = g(PropBase::fetch<Q>);
+        auth = true;
+    }
+    consteval Equiv(const Equiv& other) {
+        if (!other.auth) throw; // prevent illegal construction
+        auth = true;
+    }
+
+    consteval Q operator()(P) const { return PropBase::fetch<Q>; }
+    consteval P operator()(Q) requires (!std::same_as<P, Q>) const { return PropBase::fetch<P>; }
+
+private:
+    friend class PropBase;
+    consteval Equiv() : auth(true) {}
+
+    bool auth = false;
+};
 
 template <size_t id>
 class Prop final : public PropBase {
