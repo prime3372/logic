@@ -76,7 +76,7 @@ private:
 template <PropType P, PropType Q>
 class Or final : public PropBase {
 public:
-    consteval Or() requires std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>> : auth(true) {}
+    consteval Or() requires (std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>>) : auth(true) {}
     consteval Or(P) : auth(true) {}
     consteval Or(Q) requires (!std::same_as<P, Q>) : auth(true) {}
     consteval Or(const Or& other) {
