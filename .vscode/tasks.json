@@ -14,7 +14,7 @@
         "-fsyntax-only",
         "-I",
         "${workspaceFolder}",
-        "-std=c++20",
+        "-std=c++23",
         "-Wreturn-type"
       ],
       "problemMatcher": [
