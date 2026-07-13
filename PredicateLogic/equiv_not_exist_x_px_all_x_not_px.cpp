@@ -1,6 +1,6 @@
 #include "PredicateLogic.hpp"
 
-template <TermType x> using P = Prop<0, x>;
+template <class x> using P = Prop<0, x>;
 using x = Bound<0>;
 using Px = P<x>;
 using NotPx = Not<P<x>>;
