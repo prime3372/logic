@@ -1,4 +1,4 @@
-#include "PropositionalLogic/PropositionalLogic.hpp"
+#include "PropositionalLogic.hpp"
 
 using P = Prop<0>;
 
