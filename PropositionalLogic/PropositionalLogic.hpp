@@ -1,5 +1,4 @@
 #pragma once
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 
 #include <concepts>
 #include <cstddef>
