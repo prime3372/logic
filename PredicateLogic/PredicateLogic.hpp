@@ -13,6 +13,14 @@ class PropBase;
 template <class P>
 concept PropType = std::is_base_of_v<PropBase, P>;
 
+class PropBase {
+protected:
+    consteval PropBase() {}
+
+    template <PropType P>
+    static constexpr P object = P();
+};
+
 class TermBase {};
 
 template <class T>
@@ -33,14 +41,6 @@ concept arbitrary = FreeTermType<T>;
 
 template <class T>
 concept certain = FreeTermType<T>;
-
-class PropBase {
-protected:
-    consteval PropBase() {}
-
-    template <PropType P>
-    static constexpr P object = P();
-};
 
 
 class False final : PropBase {
