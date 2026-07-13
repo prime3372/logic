@@ -1,6 +1,6 @@
 #include "PredicateLogic.hpp"
 
-template <class x, class y> using P = Prop<0, x, y>;
+template <class x, class y> using P = Pred<0, x, y>;
 using x = Bound<0>;
 using y = Bound<1>;
 using Pxy = P<x, y>;

@@ -21,26 +21,26 @@ protected:
     static constexpr P object = P();
 };
 
-class TermBase {};
+class VarBase {};
 
 template <class T>
-concept TermType = std::is_base_of_v<TermBase, T>;
+concept VarType = std::is_base_of_v<VarBase, T>;
 
-class BoundTermBase : TermBase {};
-
-template <class T>
-concept BoundTermType = std::is_base_of_v<BoundTermBase, T>;
-
-class FreeTermBase : TermBase {};
+class BoundVarBase : VarBase {};
 
 template <class T>
-concept FreeTermType = std::is_base_of_v<FreeTermBase, T>;
+concept BoundVarType = std::is_base_of_v<BoundVarBase, T>;
+
+class FreeVarBase : VarBase {};
 
 template <class T>
-concept TakeSome = FreeTermType<T>;
+concept FreeVarType = std::is_base_of_v<FreeVarBase, T>;
 
 template <class T>
-concept TakeAny = FreeTermType<T>;
+concept TakeSome = FreeVarType<T>;
+
+template <class T>
+concept TakeAny = FreeVarType<T>;
 
 
 class False final : PropBase {
@@ -199,30 +199,30 @@ private:
 };
 
 
-template <size_t id, TermType... P>
-class Prop final : PropBase {
+template <size_t id, VarType... P>
+class Pred final : PropBase {
 public:
-    template <TermType... Args>
-    using Template = Prop<id, Args...>;
+    template <VarType... Args>
+    using Template = Pred<id, Args...>;
     using TemplateArgs = std::tuple<P...>;
 
-    consteval Prop(const Prop& other) {
+    consteval Pred(const Pred& other) {
         if (!other.initialized) throw; // prevent illegal initialization
         initialized = true;
     }
 
 private:
     friend class PropBase;
-    consteval Prop() : initialized(true) {}
+    consteval Pred() : initialized(true) {}
 
     bool initialized = false;
 };
 
 
-template <BoundTermType x, PropType P>
+template <BoundVarType x, PropType P>
 class All final : PropBase {
 public:
-    template <BoundTermType t, PropType T>
+    template <BoundVarType t, PropType T>
     using Template = All<t, T>;
     using TemplateArgs = std::tuple<x, P>;
 
@@ -237,11 +237,11 @@ public:
         initialized = true;
     }
 
-    template <FreeTermType a>
+    template <FreeVarType a>
     consteval ReplaceType<P, x, a> elim(a) { return PropBase::object<ReplaceType<P, x, a>>; }
 
 private:
-    class t final : FreeTermBase {
+    class t final : FreeVarBase {
     public:
         template <class _ = void>
         using Template = t;
@@ -255,18 +255,18 @@ private:
     bool initialized = false;
 };
 
-template <BoundTermType x, PropType P>
+template <BoundVarType x, PropType P>
 using NotAll = Not<All<x, P>>;
 
 
-template <BoundTermType x, PropType P>
+template <BoundVarType x, PropType P>
 class Exist final : PropBase {
 public:
-    template <BoundTermType t, PropType T>
+    template <BoundVarType t, PropType T>
     using Template = Exist<t, T>;
     using TemplateArgs = std::tuple<x, P>;
 
-    template <FreeTermType a>
+    template <FreeVarType a>
     consteval Exist(a, ReplaceType<P, x, a>) : initialized(true) {}
 
     consteval Exist(const Exist& other) {
@@ -280,7 +280,7 @@ public:
     }
 
 private:
-    class t : FreeTermBase {
+    class t : FreeVarBase {
     public:
         template <class _ = void>
         using Template = t;
@@ -294,12 +294,12 @@ private:
     bool initialized = false;
 };
 
-template <BoundTermType x, PropType P>
+template <BoundVarType x, PropType P>
 using NotExist = Not<Exist<x, P>>;
 
 
 template <size_t id>
-class Bound final : BoundTermBase {
+class Bound final : BoundVarBase {
 public:
     template <class _ = void>
     using Template = Bound;
