@@ -33,7 +33,10 @@ class ReplaceTypeHelper_Class {
 template <class Tuple, class x, class t, size_t... Is>
 class ReplaceTypeHelper_Class<Tuple, x, t, std::index_sequence<Is...>> {
 public:
-    using type = std::tuple<ReplaceType<std::tuple_element_t<Is, Tuple>, x, t>...>;
+    using type =
+        std::tuple<
+            ReplaceType<std::tuple_element_t<Is, Tuple>, x, t>...
+        >;
 };
 
 template <class Tuple, class x, class t>

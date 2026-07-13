@@ -98,7 +98,6 @@ public:
     using Template = And<T, U>;
     using TemplateArgs = std::tuple<P, Q>;
 
-
     consteval And(P, Q) : initialized(true) {}
     consteval And(const And& other) {
         if (!other.initialized) throw; // prevent illegal initialization
