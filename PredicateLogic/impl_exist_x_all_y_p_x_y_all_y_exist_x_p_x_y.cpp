@@ -1,4 +1,4 @@
-#include "PredicateLogic.hpp"
+#include "PredicateLogic/PredicateLogic.hpp"
 
 template <TermType x, TermType y>
 using P = Prop<0, x, y>;
