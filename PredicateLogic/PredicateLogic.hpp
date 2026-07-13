@@ -221,7 +221,7 @@ private:
 
 
 template <BoundTermType x, PropType P>
-class All : PropBase {
+class All final : PropBase {
 public:
     template <BoundTermType t, PropType T>
     using Template = All<t, T>;
@@ -242,7 +242,7 @@ public:
     consteval ReplaceType<P, x, a> elim(a) { return PropBase::object<ReplaceType<P, x, a>>; }
 
 private:
-    class t : FreeTermBase {
+    class t final : FreeTermBase {
     public:
         template <class _ = void>
         using Template = t;
@@ -258,7 +258,7 @@ private:
 
 
 template <BoundTermType x, PropType P>
-class Exist : PropBase {
+class Exist final : PropBase {
 public:
     template <BoundTermType t, PropType T>
     using Template = Exist<t, T>;
@@ -293,9 +293,8 @@ private:
 };
 
 
-
 template <size_t id>
-class Bound : BoundTermBase {
+class Bound final : BoundTermBase {
 public:
     template <class _ = void>
     using Template = Bound;
@@ -303,7 +302,7 @@ public:
     consteval Bound() {}
 };
 
-class Free : FreeTermBase {
+class Free final : FreeTermBase {
 public:
     template <class _ = void>
     using Template = Free;
