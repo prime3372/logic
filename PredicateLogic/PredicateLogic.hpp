@@ -37,11 +37,10 @@ template <class T>
 concept FreeTermType = std::is_base_of_v<FreeTermBase, T>;
 
 template <class T>
-concept arbitrary = FreeTermType<T>;
+concept TakeSome = FreeTermType<T>;
 
 template <class T>
-concept certain = FreeTermType<T>;
-
+concept TakeAny = FreeTermType<T>;
 
 class False final : PropBase {
 public:
