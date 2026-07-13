@@ -18,7 +18,7 @@ protected:
     static constexpr P object = P();
 };
 
-class False final : public PropBase {
+class False final : PropBase {
 public:
     consteval False(const False& other) {
         if (!other.initialized) throw; // prevent illegal initialization
@@ -36,7 +36,7 @@ private:
 };
 
 template <PropType P>
-class Not final : public PropBase {
+class Not final : PropBase {
 public:
     consteval Not(auto f) {
         False q = f(PropBase::object<P>);
@@ -57,7 +57,7 @@ private:
 };
 
 template <PropType P, PropType Q>
-class And final : public PropBase {
+class And final : PropBase {
 public:
     consteval And(P, Q) : initialized(true) {}
     consteval And(const And& other) {
@@ -76,7 +76,7 @@ private:
 };
 
 template <PropType P, PropType Q>
-class Or final : public PropBase {
+class Or final : PropBase {
 public:
     consteval Or() requires (std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>>) : initialized(true) {}
     consteval Or(P) : initialized(true) {}
@@ -101,7 +101,7 @@ private:
 };
 
 template <PropType P, PropType Q>
-class Impl final : public PropBase {
+class Impl final : PropBase {
 public:
     consteval Impl(auto f) {
         Q q = f(PropBase::object<P>);
@@ -122,7 +122,7 @@ private:
 };
 
 template <PropType P, PropType Q>
-class Equiv final : public PropBase {
+class Equiv final : PropBase {
 public:
     consteval Equiv(auto f, auto g) {
         Q q = f(PropBase::object<P>);
@@ -145,7 +145,7 @@ private:
 };
 
 template <size_t id>
-class Prop final : public PropBase {
+class Prop final : PropBase {
 public:
     consteval Prop(const Prop& other) {
         if (!other.initialized) throw; // prevent illegal initialization
