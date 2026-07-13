@@ -18,6 +18,7 @@ protected:
     static constexpr P object = P();
 };
 
+
 class False final : PropBase {
 public:
     consteval False(const False& other) {
@@ -34,6 +35,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P>
 class Not final : PropBase {
@@ -56,6 +58,7 @@ private:
     bool initialized = false;
 };
 
+
 template <PropType P, PropType Q>
 class And final : PropBase {
 public:
@@ -74,6 +77,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P, PropType Q>
 class Or final : PropBase {
@@ -100,6 +104,7 @@ private:
     bool initialized = false;
 };
 
+
 template <PropType P, PropType Q>
 class Impl final : PropBase {
 public:
@@ -120,6 +125,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P, PropType Q>
 class Equiv final : PropBase {
@@ -143,6 +149,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <size_t id>
 class Prop final : PropBase {

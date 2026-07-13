@@ -1,4 +1,4 @@
-#include "PropositionalLogic.hpp"
+#include "PropositionalLogic/PropositionalLogic.hpp"
 
 consteval Not<False> solve() {
     return [&](False fal) -> False { return fal; };
