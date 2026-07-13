@@ -42,6 +42,7 @@ concept TakeSome = FreeTermType<T>;
 template <class T>
 concept TakeAny = FreeTermType<T>;
 
+
 class False final : PropBase {
 public:
     template <class _ = void>
@@ -304,12 +305,4 @@ public:
     using Template = Bound;
     using TemplateArgs = std::tuple<>;
     consteval Bound() {}
-};
-
-class Free final : FreeTermBase {
-public:
-    template <class _ = void>
-    using Template = Free;
-    using TemplateArgs = std::tuple<>;
-    consteval Free() {}
 };
