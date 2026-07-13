@@ -28,6 +28,11 @@ class FreeTermBase : TermBase {};
 template <class T>
 concept FreeTermType = std::is_base_of_v<FreeTermBase, T>;
 
+template <class T>
+concept arbitrary = FreeTermType<T>;
+
+template <class T>
+concept certain = FreeTermType<T>;
 
 class PropBase {
 protected:
@@ -36,6 +41,7 @@ protected:
     template <PropType P>
     static constexpr P object = P();
 };
+
 
 class False final : PropBase {
 public:
@@ -57,6 +63,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P>
 class Not final : PropBase {
@@ -83,6 +90,7 @@ private:
     bool initialized = false;
 };
 
+
 template <PropType P, PropType Q>
 class And final : PropBase {
 public:
@@ -106,6 +114,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P, PropType Q>
 class Or final : PropBase {
@@ -136,6 +145,7 @@ private:
     bool initialized = false;
 };
 
+
 template <PropType P, PropType Q>
 class Impl final : PropBase {
 public:
@@ -160,6 +170,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <PropType P, PropType Q>
 class Equiv final : PropBase {
@@ -187,6 +198,7 @@ private:
 
     bool initialized = false;
 };
+
 
 template <size_t id, TermType... P>
 class Prop final : PropBase {
