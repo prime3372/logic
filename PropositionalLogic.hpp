@@ -5,16 +5,18 @@
 #include <cstddef>
 #include <type_traits>
 
+class PropBase;
+
+template <class P>
+concept PropType = std::is_base_of_v<PropBase, P>;
+
 class PropBase {
 protected:
     consteval PropBase() {}
 
-    template <class P>
+    template <PropType P>
     static constexpr P object = P();
 };
-
-template <class P>
-concept PropType = std::is_base_of_v<PropBase, P>;
 
 class False final : public PropBase {
 public:
@@ -87,7 +89,7 @@ public:
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
         auto rg(g(PropBase::object<Q>));
-        if (!std::same_as<decltype(rf), decltype(rg)>) throw; // the return types of f and g must be the same
+        if (!std::same_as<decltype(rf), decltype(rg)>) throw;
         return PropBase::object<decltype(rf)>;
     }
 
