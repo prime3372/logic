@@ -16,7 +16,7 @@ consteval Equiv<NotExist<x, Px>, All<x, NotPx>> solve() {
             return [&](Exist<x, Px> exist_x_px) -> False {
                 return exist_x_px.elim(
                     [&]<TakeSome a>(P<a> pa) -> False {
-                        return all_x_not_px.elim(a()).elim(pa);
+                        return all_x_not_px.elim(a())(pa);
                     }
                 );
             };

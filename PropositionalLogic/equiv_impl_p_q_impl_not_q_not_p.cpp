@@ -8,7 +8,7 @@ consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
         [&](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
             return [&](Not<Q> not_q) -> Not<P> {
                 return [&](P p) -> False {
-                    return not_q.elim(impl_p_q(p));
+                    return not_q(impl_p_q(p));
                 };
             };
         },
@@ -16,7 +16,7 @@ consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
             return [&](P p) -> Q {
                 return Or<Q, Not<Q>>().elim(
                     [&](Q q) -> Q { return q; },
-                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q).elim(p).explode<Q>(); }
+                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
                 );
             };
         }
