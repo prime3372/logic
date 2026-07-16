@@ -50,8 +50,7 @@ public:
     using TemplateArgs = std::tuple<>;
 
     consteval False(const False& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     template <PropType P>
@@ -61,7 +60,7 @@ private:
     friend class PropBase;
     consteval False() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -77,18 +76,16 @@ public:
         initialized = true;
     }
     consteval Not(const Not& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval False elim(P) const { return PropBase::object<False>; }
-    consteval False operator()(P p) const { return elim(p); }
+    consteval False operator()(P) const { return PropBase::object<False>; }
 
 private:
     friend class PropBase;
     consteval Not() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -101,8 +98,7 @@ public:
 
     consteval And(P, Q) : initialized(true) {}
     consteval And(const And& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     const P left = PropBase::object<P>;
@@ -112,7 +108,7 @@ private:
     friend class PropBase;
     consteval And() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -127,8 +123,7 @@ public:
     consteval Or(P) : initialized(true) {}
     consteval Or(Q) requires (!std::same_as<P, Q>) : initialized(true) {}
     consteval Or(const Or& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     consteval auto elim(auto f, auto g) const {
@@ -142,7 +137,7 @@ private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -158,18 +153,16 @@ public:
         initialized = true;
     }
     consteval Impl(const Impl& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
 private:
     friend class PropBase;
     consteval Impl() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -186,21 +179,18 @@ public:
         initialized = true;
     }
     consteval Equiv(const Equiv& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
-    consteval P elim(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
-    consteval P operator()(Q q) const requires (!std::same_as<P, Q>) { return elim(q); }
+    consteval P operator()(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
 
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -212,15 +202,14 @@ public:
     using TemplateArgs = std::tuple<P...>;
 
     consteval Pred(const Pred& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
 private:
     friend class PropBase;
     consteval Pred() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -236,10 +225,8 @@ public:
         if (!std::same_as<decltype(p), ReplaceType<P, x, t>>) throw;
         initialized = true;
     }
-
     consteval All(const All& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     template <FreeVarType a>
@@ -257,7 +244,7 @@ private:
     friend class PropBase;
     consteval All() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 template <BoundVarType x, PropType P>
@@ -275,8 +262,7 @@ public:
     consteval Exist(a, ReplaceType<P, x, a>) : initialized(true) {}
 
     consteval Exist(const Exist& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     consteval auto elim(auto f) {
@@ -296,7 +282,7 @@ private:
     friend class PropBase;
     consteval Exist() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 template <BoundVarType x, PropType P>

@@ -21,8 +21,7 @@ protected:
 class False final : PropBase {
 public:
     consteval False(const False& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     template <PropType P>
@@ -32,7 +31,7 @@ private:
     friend class PropBase;
     consteval False() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -44,28 +43,25 @@ public:
         initialized = true;
     }
     consteval Not(const Not& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval False elim(P) const { return PropBase::object<False>; }
-    consteval False operator()(P p) const { return elim(p); }
+    consteval False operator()(P) const { return PropBase::object<False>; }
 
 private:
     friend class PropBase;
     consteval Not() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
 template <PropType P, PropType Q>
 class And final : PropBase {
 public:
-    consteval And(P, Q) : initialized(true) {}
+    consteval And(P p, Q q) : initialized(true) {}
     consteval And(const And& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     const P left = PropBase::object<P>;
@@ -75,7 +71,7 @@ private:
     friend class PropBase;
     consteval And() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -86,8 +82,7 @@ public:
     consteval Or(P) : initialized(true) {}
     consteval Or(Q) requires (!std::same_as<P, Q>) : initialized(true) {}
     consteval Or(const Or& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     consteval auto elim(auto f, auto g) const {
@@ -101,7 +96,7 @@ private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -113,18 +108,16 @@ public:
         initialized = true;
     }
     consteval Impl(const Impl& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
 private:
     friend class PropBase;
     consteval Impl() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -137,21 +130,18 @@ public:
         initialized = true;
     }
     consteval Equiv(const Equiv& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
-    consteval P elim(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
-    consteval P operator()(Q q) const requires (!std::same_as<P, Q>) { return elim(q); }
+    consteval P operator()(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
 
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 
 
@@ -159,13 +149,12 @@ template <size_t id>
 class Prop final : PropBase {
 public:
     consteval Prop(const Prop& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
 private:
     friend class PropBase;
     consteval Prop() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };

@@ -19,19 +19,11 @@
 動作確認はすべてg\+\+で行っています。他の環境で動くかは確かめていません。  
 実際にコードを動かすときは次のコンパイルオプションを付けてください。
 ```powershell
--fconstexpr-depth=2147483647
--fconstexpr-loop-limit=2147483647
--fconstexpr-ops-limit=2147483647
 -fsyntax-only
 -std=c++23
 ```
-
-自力を証明を書く場合は次のオプションも付けた方がよいです。
-```powershell
--Wmissing-template-keyword
--Wreturn-type
--fdiagnostics-color=always
-```
+- -fsyntax-only：構文チェックのみを行うオプションです。実行ファイルが出力されなくなります。
+- -std=c\+\+23：バージョンとしてC\+\+23を指定します。
 
 ## 2. 命題論理の公理・推論規則
 
@@ -39,33 +31,33 @@
 
 - 公理
     - **排中律**
-    $$A\lor\lnot A$$
+    $$P\lor\lnot P$$
 - 推論規則
     - **爆発律**
-    $$\bot\vdash A$$
+    $$\bot\vdash P$$
     - **$\lnot$ 導入則**
-    $$[A]\cdots\bot\vdash\lnot A$$
+    $$[P]\cdots\bot\vdash\lnot P$$
     - **$\lnot$ 除去則**
-    $$A,\lnot A\vdash$$
+    $$P,\lnot P\vdash\bot$$
     - **$\land$ 導入則**
-    $$A, B \vdash A\land B$$
+    $$P, Q \vdash P\land Q$$
     - **$\land$ 除去則**
-    $$A\land B\vdash A$$
-    $$A\land B\vdash B$$
+    $$P\land Q\vdash P$$
+    $$P\land Q\vdash Q$$
     - **$\lor$ 導入則**
-    $$A\vdash A\lor B$$
-    $$B\vdash A\lor B$$
+    $$P\vdash P\lor Q$$
+    $$Q\vdash P\lor Q$$
     - **$\lor$ 除去則**
-    $$A\lor B,[A]\cdots C,[B]\cdots C\vdash C$$
+    $$P\lor Q,[P]\cdots R,[Q]\cdots R\vdash R$$
     - **$\rightarrow$ 導入則**
-    $$[A]\cdots B\vdash A\rightarrow B$$
+    $$[P]\cdots Q\vdash P\rightarrow Q$$
     - **$\rightarrow$ 除去則**
-    $$A,A\rightarrow B\vdash B$$
+    $$P,P\rightarrow Q\vdash Q$$
     - **$\leftrightarrow$ 導入則**
-    $$[A]\cdots B,[B]\cdots A\vdash A\leftrightarrow B$$
+    $$[P]\cdots Q,[Q]\cdots P\vdash P\leftrightarrow Q$$
     - **$\leftrightarrow$ 除去則**
-    $$A,A\leftrightarrow B\vdash B$$
-    $$B,A\leftrightarrow B\vdash A$$
+    $$P,P\leftrightarrow Q\vdash Q$$
+    $$Q,P\leftrightarrow Q\vdash P$$
 ※ $[X]\cdots Y$ で $X$ を仮定すれば $Y$ を導出できることを表します。
 
 ## 3. 命題論理の実装
@@ -78,9 +70,9 @@
 | 命題 | クラス |
 | 証明 | オブジェクト |
 | 証明する | クラスのコンストラクタを呼ぶ |
-| 仮定する | 仮定に対応する命題クラスを引数とするラムダ式を定義する |
-| 仮定付きで証明する | ラムダ式から目的の命題を返す |
 | 証明した命題を使う | オブジェクトからメンバ関数を呼ぶ |
+| 仮定する | 仮定を引数として要求するラムダ式を定義する |
+| 仮定付きで証明する | 仮定を引数として要求するラムダ式から目的の命題を返す |
 
 ※ 表のような対応関係をカリー・ハワード同型対応と呼ぶらしいです。
 
@@ -146,8 +138,7 @@ private:
 
 `False` クラスは論理記号 $\bot$ に対応します。
 
-最初に書かれている `False(const False& other)` はコピーコンストラクタです。命題は一度証明されてしまえばそれまでなので、一度生成できたオブジェクトは自由にコピーできるとしてよいです。  
-コピーコンストラクタ内部で書かれている処理は不正な初期化を防ぐためのものです。これがないと、例えば
+最初に書かれている `False(const False& other)` はコピーコンストラクタで、内部に書かれている処理は不正な初期化を防ぐためのものです。これがないと、例えば
 ```
 False fal(fal);
 ```
@@ -184,14 +175,20 @@ private:
 };
 ```
 
-`Not` テンプレートは論理記号 $\lnot$ に対応します。
+`Not` クラステンプレートは論理記号 $\lnot $ に対応します。
 
 コンストラクタ `Not(auto f)` は $\lnot$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `False` のオブジェクトが返ってくるか検証します。  
-※ `consteval` 修飾子の効果によりラムダ式 `f` は定数式として実行されます。定数式として実行できるのは副作用のない関数だけなので、引数として渡した `P` クラスのオブジェクトが不正に使われる心配はありません。
 
-メンバ関数 `elim` は $\lnot$ 除去則を実装したものです。 `P` クラスのオブジェクトを受け取って `False` クラスのオブジェクトを返します。
+メンバ関数 `elim` は $\lnot$ 除去則を表しています。 `P` クラスのオブジェクトを受け取って `False` クラスのオブジェクトを返します。
 `operator()` は `elim` と同等の効果です。これにより `Not` は `P` を受け取って `False` を返すラムダ式と同じように使えます。
  
+※ `Not<P>` の機能は `Impl<P, False>` と本質的に同じなので、エイリアステンプレートを用いて
+```cpp
+template <class P>
+using Not = Impl<P, False>
+```
+としても `Not` の実装として十分です。`Impl` の実装については3.7節を参照してください。
+
 ### 3.5 `And` の実装
 
 ```cpp
@@ -215,11 +212,11 @@ private:
 };
 ```
 
-`And` テンプレートは論理記号 $\land$ に対応します。
+`And` クラステンプレートは論理記号 $\land$ に対応します。
 
 コンストラクタ `And(P, Q)` は $\land$ 導入則を表しています。`P`, `Q` のオブジェクトから `And<P, Q>` のオブジェクトを生成できます。
 
-メンバ変数 `left` `right`は  $\land$ 除去則に対応します。
+メンバ変数 `left`, `right`は  $\land$ 除去則を表しています。
 
 ### 3.6 `Or` の実装
 
@@ -250,13 +247,13 @@ private:
 };
 ```
 
-`Or` テンプレートは論理記号 $\lor$ に対応します。
+`Or` クラステンプレートは論理記号 $\lor$ に対応します。
 
 デフォルトコンストラクタは排中律を表しています。`Q` と `Not<P>` がクラスとして等しいとき、または `P` と `Not<Q>` がクラスとして等しいとき、デフォルトコンストラクタを呼び出すことができます。
 
-2, 3番目のコンストラクタにより、`P` または `Q` のオブジェクトから `Or<P, Q>` のオブジェクトを生成できます。これは $\lor$ 導入則に対応します。
+2, 3番目のコンストラクタは $\lor$ 導入則を表しています。`P` または `Q` のオブジェクトから `Or<P, Q>` のオブジェクトを生成できます。
 
-メンバ関数 `elim` は $\lor$ 除去則を実装したものです。2つのラムダ式 `f`, `g` にそれぞれ `P`, `Q` のオブジェクトを渡して同じクラスのオブジェクトが返ってくるか検証します。戻り値としてそのオブジェクトを返します。
+メンバ関数 `elim` は $\lor$ 除去則を表しています。2つのラムダ式 `f`, `g` にそれぞれ `P`, `Q` のオブジェクトを渡して同じクラスのオブジェクトが返ってくるか検証します。戻り値としてそのオブジェクトを返します。
 
 ### 3.7 `Impl` の実装
 
@@ -273,7 +270,8 @@ public:
         initialized = true;
     }
 
-    consteval Q operator()(P) const { return PropBase::object<Q>; }
+    consteval Q elim(P) const { return PropBase::object<Q>; }
+    consteval Q operator()(P p) const { return elim(p); }
 
 private:
     friend class PropBase;
@@ -283,18 +281,53 @@ private:
 };
 ```
 
-`Impl` テンプレートは論理記号 $\rightarrow$ に対応します。
+`Impl` クラステンプレートは論理記号 $\rightarrow$ に対応します。
 
 コンストラクタ `Impl(auto f)` は $\rightarrow$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか検証します。
 
+### 3.8 `Equiv` の実装
+
+```cpp
+template <PropType P, PropType Q>
+class Equiv final : PropBase {
+public:
+    consteval Equiv(auto f, auto g) {
+        Q q = f(PropBase::object<P>);
+        P p = g(PropBase::object<Q>);
+        initialized = true;
+    }
+    consteval Equiv(const Equiv& other) {
+        if (!other.initialized) throw; // prevent illegal initialization
+        initialized = true;
+    }
+
+    consteval Q elim(P) const { return PropBase::object<Q>; }
+    consteval Q operator()(P p) const { return elim(p); }
+
+    consteval P elim(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
+    consteval P operator()(Q q) const requires (!std::same_as<P, Q>) { return elim(q); }
+
+private:
+    friend class PropBase;
+    consteval Equiv() : initialized(true) {}
+
+    bool initialized = false;
+};
+```
+
+## 4. 命題論理の証明例
 
 
-
-## 4. 述語論理の推論
-
-
-## 5. 述語論理の実装
+## 5. 述語論理の推論
 
 
-## 6. まとめ
+## 6. 述語論理の実装
 
+
+## 7. 述語論理の証明例
+
+## 8. 実装の全体像
+
+完成した述語論理の形式的証明ツールを以下に示します。
+
+## 9. 参考資料

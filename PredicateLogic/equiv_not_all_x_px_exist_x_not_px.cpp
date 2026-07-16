@@ -16,7 +16,7 @@ consteval Equiv<NotAll<x, Px>, Exist<x, NotPx>> solve() {
                             return Or<P<a>, Not<P<a>>>().elim(
                                 [&](P<a> pa) -> P<a> { return pa; },
                                 [&](Not<P<a>> not_pa) -> P<a> {
-                                    return notexist_x_not_px.elim(
+                                    return notexist_x_not_px(
                                         {a(), not_pa}
                                     ).template explode<P<a>>();
                                 }
