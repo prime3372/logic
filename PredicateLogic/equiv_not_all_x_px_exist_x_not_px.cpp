@@ -30,7 +30,7 @@ consteval Equiv<NotAll<x, Px>, Exist<x, NotPx>> solve() {
             return exist_x_not_px.elim(
                 [&]<TakeSome a>(Not<P<a>> not_pa) -> NotAll<x, Px> {
                     return [&](All<x, Px> all_x_px) -> False {
-                        return not_pa(all_x_px.elim(a()));
+                        return not_pa(all_x_px.elim<a>());
                     };
                 }
             );

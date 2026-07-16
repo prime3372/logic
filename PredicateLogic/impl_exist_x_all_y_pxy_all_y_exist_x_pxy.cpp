@@ -10,7 +10,7 @@ consteval Impl<Exist<x, All<y, Pxy>>, All<y, Exist<x, Pxy>>> solve() {
         return exist_x_all_y_pxy.elim(
             [&]<TakeSome a>(All<y, P<a, y>> all_y_pay) -> All<y, Exist<x, Pxy>> {
                 return [&]<TakeAny b>() -> Exist<x, P<x, b>> {
-                    return {a(), all_y_pay.elim(b())};
+                    return {a(), all_y_pay.template elim<b>()};
                 };
             }
         );

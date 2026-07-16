@@ -243,7 +243,7 @@ public:
     }
 
     template <FreeVarType a>
-    consteval ReplaceType<P, x, a> elim(a) { return PropBase::object<ReplaceType<P, x, a>>; }
+    consteval ReplaceType<P, x, a> elim() { return PropBase::object<ReplaceType<P, x, a>>; }
 
 private:
     class t final : FreeVarBase {
