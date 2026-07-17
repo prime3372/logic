@@ -1,20 +1,8 @@
 # C++で形式的証明
 
-## 目次
-
-1. はじめに
-2. 命題論理の公理・推論規則
-3. 命題論理の実装
-4. 命題論理の証明例
-5. 述語論理の公理・推論規則
-6. 述語論理の実装
-7. 述語論理の証明例
-8. 実装の全体像
-9. 参考資料
-
 ## 1. はじめに
 
-本稿では述語論理の形式的証明ツールをC\+\+で実装します。形式的証明のコンパイラをC\+\+で書くという意味ではなく、C\+\+の言語機能をそのまま形式的証明の文法に利用し、C\+\+のコードとして形式的証明をコンパイルすることを目指します。正しい証明に対してコンパイルが通るようにすることはもちろん、（常識的な）間違いを含む証明に対してコンパイルエラーを出すことも目標にします。
+本稿では述語論理の形式的証明ツールをC\+\+で実装します。形式的証明のコンパイラをC\+\+で書くという意味ではなく、C\+\+の言語機能をそのまま形式的証明の文法に利用し、C\+\+のコードとして形式的証明をコンパイルすることを目指します。正しい証明に対してコンパイルが通るようにすることはもちろん、常識的な範囲の間違いを含む証明に対してコンパイルエラーを出すことも目標にします。
 
 動作確認はすべてg\+\+で行っています。他の環境で動くかは確かめていません。  
 実際にコードを動かすときは次のコンパイルオプションを付けてください。
@@ -71,28 +59,26 @@
 | 証明 | オブジェクト |
 | 証明する | クラスのコンストラクタを呼ぶ |
 | 証明した命題を使う | オブジェクトからメンバ関数を呼ぶ |
-| 仮定する | 仮定を引数として要求するラムダ式を定義する |
-| 仮定付きで証明する | 仮定を引数として要求するラムダ式から目的の命題を返す |
+| 仮定する | 仮定を引数として受け取るラムダ式を定義する |
+| 仮定付きで証明する | 仮定を引数として受け取るラムダ式から目的の命題を返す |
 
-※ 表のような対応関係をカリー・ハワード同型対応と呼ぶらしいです。
-
-以上の議論を踏まえると、論理記号 $\bot, \lnot,\land,\lor,\rightarrow,\leftrightarrow$ の実装方針として次が立ちます。
+この対応関係の下で、論理記号 $\bot, \lnot,\land,\lor,\rightarrow,\leftrightarrow$ を以下のように実装することにします。
 
 | 論理記号 | コンストラクタ | メンバ |
 | ------ | ----- | ----- |
 | $\bot$ | なし | 任意の命題を返す（**爆発律**） |
 | $\lnot A$ | $A$ を受け取って $\bot$ を返すラムダ式を要求（**$\lnot$ 導入則**） | $A$ を受け取って $\bot$ を返す（**$\lnot$ 除去則**） |
-| $A\land B$ | $A,B$ の両方を要求（**$\land$ 導入則**） | $A, B$ をそれぞれ返す（**$\land$ 除去則**） |
-| $A\lor B$ | $A,B$ の一方を要求（**$\lor$ 導入則**） | 「$A$ を受け取って $C$ を返すラムダ式」「$B$ を受け取って $C$ を返すラムダ式」の2つを受け取って $C$ を返す（**$\lor$ 除去則**） |
+| $A\land B$ | $A,B$ を両方とも要求（**$\land$ 導入則**） | $A, B$ をそれぞれ返す（**$\land$ 除去則**） |
+| $A\lor B$ | $A$ または $B$ の一方を要求（**$\lor$ 導入則**） | 「$A$ を受け取って $C$ を返すラムダ式」「$B$ を受け取って $C$ を返すラムダ式」の2つを受け取って $C$ を返す（**$\lor$ 除去則**） |
 | $A\rightarrow B$ | $A$ を受け取って $B$ を返すラムダ式を要求（**$\rightarrow$ 導入則**） | $A$ を受け取って $B$ を返す（**$\rightarrow$ 除去則**） | 
-| $A\leftrightarrow B$ | 「$A$ を受け取って $B$ を返すラムダ式」と「$B$ を受け取って $A$ を返すラムダ式」の2つを要求（**$\leftrightarrow$ 導入則**） | $A, B$ の一方を受け取って他方を返す（**$\leftrightarrow$ 除去則**） | 
+| $A\leftrightarrow B$ | 「$A$ を受け取って $B$ を返すラムダ式」「$B$ を受け取って $A$ を返すラムダ式」の2つを要求（**$\leftrightarrow$ 導入則**） | $A, B$ の一方を受け取って他方を返す（**$\leftrightarrow$ 除去則**） | 
 
 $A\lor\lnot A$ および $\lnot A\lor A$ はデフォルトコンストラクタを持つものとします。（**排中律**）  
-命題変数 $A,B,C,\ldots$ は コンストラクタを持たないクラスとして実装します。したがって $\bot$ 以外の論理記号はクラステンプレートとなります。
+命題変数 $A,B,C,\ldots$ もクラスとして実装します。したがって $\bot$ 以外の論理記号はクラステンプレートとなります。
 
 ### 3.2. 基底クラス
 
-前節で述べたように、命題クラスのコンストラクタは公理・推論規則と整合しなければなりません。一方で、除去則を実装するからには、命題クラスどうしでオブジェクトを自由にやりとりできる必要があります。そこで、すべての命題クラスの基底クラス `PropBase` を定義し、その中で命題クラスのオブジェクトを一括管理することにします。
+除去則を実装するためには、命題クラスどうしでオブジェクトをやりとりさせる必要があります。そこで、すべての命題クラスの基底クラス `PropBase` を定義し、その中で命題クラスのオブジェクトを一括管理することにします。
 
 ```cpp
 class PropBase;
@@ -115,14 +101,13 @@ protected:
 
 ※ `PropBase()` に付いている `consteval` はコンパイル時評価を強制するための修飾子です。`constexpr` と異なり、コンパイル時評価できなかった場合にはエラーが出ます。本稿の形式的証明ツールはコンパイルのみで完結するので、すべての関数に例外なく `consteval` を付けています。
 
-### 3.3. `False` の実装
+### 3.3. `False`
 
 ```cpp
 class False final : PropBase {
 public:
     consteval False(const False& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     template <PropType P>
@@ -132,24 +117,24 @@ private:
     friend class PropBase;
     consteval False() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
 `False` クラスは論理記号 $\bot$ に対応します。
 
-最初に書かれている `False(const False& other)` はコピーコンストラクタで、内部に書かれている処理は不正な初期化を防ぐためのものです。これがないと、例えば
+メンバ関数 `explode` は爆発律を実装したものです。一度 `False` のオブジェクトを作ることができれば、`explode` を使ってあらゆる命題を証明できます。
+
+※ コピーコンストラクタ `False(const False& other)` 内に書かれている処理は不正な初期化を防ぐためのものです。例えば、次のような自己初期化はC\+\+では定義された動作であり、初期化されていない `fal` を `fal` にコピーする挙動になります。
 ```
 False fal(fal);
 ```
-のような初期化（自己初期化）が通ってしまいます。  
+コピーコンストラクタ内に `fal.initialized` を読み取る処理を書くことで、未初期化の変数の値が読み取られたことをコンパイラが検出してエラーを吐いてくれます。
 コピーコンストラクタの実装はすべての命題クラスで共通なので、以降説明を省略します。
 
-メンバ関数 `explode` は爆発律を実装したものです。一度 `False` のオブジェクトを作ることができれば、`explode` を使ってあらゆる命題を証明できます。
+※ `private:` セクション内に書かれている `friend` 宣言とデフォルトコンストラクタは、前節で説明した通り `PropBase` 内で `False` のオブジェクトを作れるようにしたものです。この部分の実装もすべての命題クラスで共通なので、以降説明を省略します。
 
-`private:` セクション内に書かれている `friend` 宣言とデフォルトコンストラクタは、前節で説明した通り `PropBase` 内で `False` のオブジェクトを作れるようにしたものです。この部分の実装もすべての命題クラスで共通なので、以降説明を省略します。
-
-### 3.4 `Not` の実装
+### 3.4. `Not`
 
 ```cpp
 template <PropType P>
@@ -160,27 +145,24 @@ public:
         initialized = true;
     }
     consteval Not(const Not& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval False elim(P) const { return PropBase::object<False>; }
-    consteval False operator()(P p) const { return elim(p); }
+    consteval False operator()(P) const { return PropBase::object<False>; }
 
 private:
     friend class PropBase;
     consteval Not() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
-`Not` クラステンプレートは論理記号 $\lnot $ に対応します。
+`Not` クラステンプレートは論理記号 $\lnot$ に対応します。
 
-コンストラクタ `Not(auto f)` は $\lnot$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `False` のオブジェクトが返ってくるか検証します。  
+コンストラクタ `Not(auto f)` は $\lnot$ 導入則を表しています。ラムダ式 `f` に `P` クラスのオブジェクトを渡して `False` クラスのオブジェクトが返ってくるか検証します。  
 
-メンバ関数 `elim` は $\lnot$ 除去則を表しています。 `P` クラスのオブジェクトを受け取って `False` クラスのオブジェクトを返します。
-`operator()` は `elim` と同等の効果です。これにより `Not` は `P` を受け取って `False` を返すラムダ式と同じように使えます。
+`operator()` は $\lnot$ 除去則を表しています。 `P` クラスのオブジェクトを受け取って `False` クラスのオブジェクトを返します。
  
 ※ `Not<P>` の機能は `Impl<P, False>` と本質的に同じなので、エイリアステンプレートを用いて
 ```cpp
@@ -189,7 +171,7 @@ using Not = Impl<P, False>
 ```
 としても `Not` の実装として十分です。`Impl` の実装については3.7節を参照してください。
 
-### 3.5 `And` の実装
+### 3.5. `And`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -197,8 +179,7 @@ class And final : PropBase {
 public:
     consteval And(P, Q) : initialized(true) {}
     consteval And(const And& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     const P left = PropBase::object<P>;
@@ -208,17 +189,17 @@ private:
     friend class PropBase;
     consteval And() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
 `And` クラステンプレートは論理記号 $\land$ に対応します。
 
-コンストラクタ `And(P, Q)` は $\land$ 導入則を表しています。`P`, `Q` のオブジェクトから `And<P, Q>` のオブジェクトを生成できます。
+コンストラクタ `And(P, Q)` は $\land$ 導入則を表しています。`P`, `Q` のオブジェクトから `And<P, Q>` のオブジェクトを構築できます。
 
 メンバ変数 `left`, `right`は  $\land$ 除去則を表しています。
 
-### 3.6 `Or` の実装
+### 3.6 `Or`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -228,14 +209,13 @@ public:
     consteval Or(P) : initialized(true) {}
     consteval Or(Q) requires (!std::same_as<P, Q>) : initialized(true) {}
     consteval Or(const Or& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
         auto rg(g(PropBase::object<Q>));
-        if (!std::same_as<decltype(rf), decltype(rg)>) throw;
+        static_assert(std::same_as<decltype(rf), decltype(rg)>);
         return PropBase::object<decltype(rf)>;
     }
 
@@ -243,7 +223,7 @@ private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
@@ -251,11 +231,11 @@ private:
 
 デフォルトコンストラクタは排中律を表しています。`Q` と `Not<P>` がクラスとして等しいとき、または `P` と `Not<Q>` がクラスとして等しいとき、デフォルトコンストラクタを呼び出すことができます。
 
-2, 3番目のコンストラクタは $\lor$ 導入則を表しています。`P` または `Q` のオブジェクトから `Or<P, Q>` のオブジェクトを生成できます。
+2, 3番目のコンストラクタは $\lor$ 導入則を表しています。`P` または `Q` のオブジェクトから `Or<P, Q>` のオブジェクトを構築できます。
 
 メンバ関数 `elim` は $\lor$ 除去則を表しています。2つのラムダ式 `f`, `g` にそれぞれ `P`, `Q` のオブジェクトを渡して同じクラスのオブジェクトが返ってくるか検証します。戻り値としてそのオブジェクトを返します。
 
-### 3.7 `Impl` の実装
+### 3.7. `Impl`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -266,18 +246,16 @@ public:
         initialized = true;
     }
     consteval Impl(const Impl& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
 private:
     friend class PropBase;
     consteval Impl() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
@@ -285,7 +263,9 @@ private:
 
 コンストラクタ `Impl(auto f)` は $\rightarrow$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか検証します。
 
-### 3.8 `Equiv` の実装
+`operator()` は $\rightarrow$ 導入則を表しています。`P` のオブジェクトを受け取って `Q` のオブジェクトを返します。
+
+### 3.8 `Equiv`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -297,25 +277,64 @@ public:
         initialized = true;
     }
     consteval Equiv(const Equiv& other) {
-        if (!other.initialized) throw; // prevent illegal initialization
-        initialized = true;
+        initialized = other.initialized;
     }
 
-    consteval Q elim(P) const { return PropBase::object<Q>; }
-    consteval Q operator()(P p) const { return elim(p); }
+    consteval Q operator()(P) const { return PropBase::object<Q>; }
 
-    consteval P elim(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
-    consteval P operator()(Q q) const requires (!std::same_as<P, Q>) { return elim(q); }
+    consteval P operator()(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
 
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
 
-    bool initialized = false;
+    bool initialized;
 };
 ```
 
+`Impl` クラステンプレートは論理記号 $\leftrightarrow$ に対応します。
+
+コンストラクタ `Impl(auto f)` は $\leftrightarrow$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか、ラムダ式 `g` に `Q` のオブジェクトを渡して `P` のオブジェクトが返ってくるか検証します。
+
+`operator()` は $\leftrightarrow$ 導入則を表しています。`P`, `Q` のオブジェクトのうち一方を受け取って他方を返します。
+
+
 ## 4. 命題論理の証明例
+
+### 4.1. 対偶律
+
+```cpp
+using P = Prop<0>;
+using Q = Prop<1>;
+
+consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
+    return {
+        [&](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
+            return [&](Not<Q> not_q) -> Not<P> {
+                return [&](P p) -> False {
+                    return not_q(impl_p_q(p));
+                };
+            };
+        },
+        [&](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
+            return [&](P p) -> Q {
+                return Or<Q, Not<Q>>().elim(
+                    [&](Q q) -> Q { return q; },
+                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
+                );
+            };
+        }
+    };
+}
+
+int main() {
+    solve();
+}
+```
+
+
+
+
 
 
 ## 5. 述語論理の推論

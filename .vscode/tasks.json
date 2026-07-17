@@ -11,9 +11,6 @@
         "${workspaceFolder}",
         "-Wmissing-template-keyword",
         "-Wreturn-type",
-        "-fconstexpr-depth=2147483647",
-        "-fconstexpr-loop-limit=2147483647",
-        "-fconstexpr-ops-limit=2147483647",
         "-fdiagnostics-color=always",
         "-fsyntax-only",
         "-std=c++23"

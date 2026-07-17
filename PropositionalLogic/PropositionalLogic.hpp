@@ -88,7 +88,7 @@ public:
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
         auto rg(g(PropBase::object<Q>));
-        if (!std::same_as<decltype(rf), decltype(rg)>) throw;
+        static_assert(std::same_as<decltype(rf), decltype(rg)>);
         return PropBase::object<decltype(rf)>;
     }
 

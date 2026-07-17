@@ -129,7 +129,7 @@ public:
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
         auto rg(g(PropBase::object<Q>));
-        if (!std::same_as<decltype(rf), decltype(rg)>) throw;
+        static_assert(std::same_as<decltype(rf), decltype(rg)>);
         return PropBase::object<decltype(rf)>;
     }
 
@@ -222,7 +222,7 @@ public:
 
     consteval All(auto f) {
         auto p(f.template operator()<t>());
-        if (!std::same_as<decltype(p), ReplaceType<P, x, t>>) throw;
+        static_assert(std::same_as<decltype(p), ReplaceType<P, x, t>>);
         initialized = true;
     }
     consteval All(const All& other) {
