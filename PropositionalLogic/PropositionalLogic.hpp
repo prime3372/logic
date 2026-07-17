@@ -59,7 +59,7 @@ private:
 template <PropType P, PropType Q>
 class And final : PropBase {
 public:
-    consteval And(P p, Q q) : initialized(true) {}
+    consteval And(P, Q) : initialized(true) {}
     consteval And(const And& other) {
         initialized = other.initialized;
     }
