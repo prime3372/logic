@@ -15,7 +15,8 @@
 
 ## 2. 命題論理の公理・推論規則
 
-まずは述語論理の土台である命題論理を構築します。今回は記号として $\bot,\lnot,\land,\lor,\rightarrow,\leftrightarrow$ を使うこととし、公理および推論規則として以下を採用します。
+まずは述語論理の土台である命題論理を構築します。今回は記号として $\bot,\lnot,\land,\lor,\rightarrow,\leftrightarrow$ を使うこととし、公理および推論規則として以下を採用します。なお、$X\vdash Y$ で $X$ から $Y$ を推論できることを、$[X]\cdots Y$ で $X$ を仮定すれば $Y$ を導出できることを表すものとします。
+
 
 - 公理
     - **排中律**
@@ -46,7 +47,6 @@
     - **$\leftrightarrow$ 除去則**
     $$P,P\leftrightarrow Q\vdash Q$$
     $$Q,P\leftrightarrow Q\vdash P$$
-※ $[X]\cdots Y$ で $X$ を仮定すれば $Y$ を導出できることを表します。
 
 ## 3. 命題論理の実装
 
@@ -304,18 +304,18 @@ using Q = Prop<1>;
 
 consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
     return {
-        [&](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
-            return [&](Not<Q> not_q) -> Not<P> {
-                return [&](P p) -> False {
+        [=](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
+            return [=](Not<Q> not_q) -> Not<P> {
+                return [=](P p) -> False {
                     return not_q(impl_p_q(p));
                 };
             };
         },
-        [&](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
-            return [&](P p) -> Q {
+        [=](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
+            return [=](P p) -> Q {
                 return Or<Q, Not<Q>>().elim(
-                    [&](Q q) -> Q { return q; },
-                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
+                    [=](Q q) -> Q { return q; },
+                    [=](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
                 );
             };
         }
@@ -336,21 +336,21 @@ using Q = Prop<1>;
 
 consteval Equiv<Not<And<P, Q>>, Or<Not<P>, Not<Q>>> solve() {
     return {
-        [&](Not<And<P, Q>> not_and_p_q) -> Or<Not<P>, Not<Q>> {
+        [=](Not<And<P, Q>> not_and_p_q) -> Or<Not<P>, Not<Q>> {
             return Or<P, Not<P>>().elim(
-                [&](P p) -> Or<Not<P>, Not<Q>> {
-                    return Not<Q>([&](Q q) -> False {
+                [=](P p) -> Or<Not<P>, Not<Q>> {
+                    return Not<Q>([=](Q q) -> False {
                         return not_and_p_q({p, q});
                     });
                 },
-                [&](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
+                [=](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
             );
         },
-        [&](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
-            return [&](And<P, Q> and_p_q) -> False {
+        [=](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
+            return [=](And<P, Q> and_p_q) -> False {
                 return or_not_p_not_q.elim(
-                    [&](Not<P> not_p) -> False { return not_p(and_p_q.left); },
-                    [&](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
+                    [=](Not<P> not_p) -> False { return not_p(and_p_q.left); },
+                    [=](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
                 );
             };
         }
@@ -369,17 +369,17 @@ using Q = Prop<1>;
 
 consteval Equiv<Not<Or<P, Q>>, And<Not<P>, Not<Q>>> solve() {
     return {
-        [&](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
+        [=](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
             return {
-                [&](P p) -> False { return not_or_p_q(p); },
-                [&](Q q) -> False { return not_or_p_q(q); }
+                [=](P p) -> False { return not_or_p_q(p); },
+                [=](Q q) -> False { return not_or_p_q(q); }
             };
         },
-        [&](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
-            return [&](Or<P, Q> or_p_q) -> False {
+        [=](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
+            return [=](Or<P, Q> or_p_q) -> False {
                 return or_p_q.elim(
-                    [&](P p) -> False { return and_not_p_not_q.left(p); },
-                    [&](Q q) -> False { return and_not_p_not_q.right(q); }
+                    [=](P p) -> False { return and_not_p_not_q.left(p); },
+                    [=](Q q) -> False { return and_not_p_not_q.right(q); }
                 );
             };
         }
@@ -399,15 +399,15 @@ using P = Prop<0>;
 
 consteval Equiv<P, Not<Not<P>>> solve() {
     return {
-        [&](P p) -> Not<Not<P>> {
-            return [&](Not<P> not_p) -> False {
+        [=](P p) -> Not<Not<P>> {
+            return [=](Not<P> not_p) -> False {
                 return not_p(p);
             };
         },
-        [&](Not<Not<P>> not_not_p) -> P {
+        [=](Not<Not<P>> not_not_p) -> P {
             return Or<P, Not<P>>().elim(
-                [&](P p) -> P { return p; },
-                [&](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
+                [=](P p) -> P { return p; },
+                [=](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
             );
         }
     };
@@ -426,8 +426,8 @@ using P = Prop<0>;
 
 consteval Equiv<P, P> solve() {
     return {
-        [&](P p) -> P { return p; },
-        [&](P p) -> P { return p; }
+        [=](P p) -> P { return p; },
+        [=](P p) -> P { return p; }
     };
 }
 
