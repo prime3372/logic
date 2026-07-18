@@ -1,16 +1,14 @@
 #include "PropositionalLogic/PropositionalLogic.hpp"
 #include <optional>
 
-using P = Prop<0>;
-
-consteval P solve() {
-    std::optional<P> fake;
-    Or<P, Not<P>>().elim(
-        [&](P p) -> Or<P, Not<P>> {
-            fake.emplace(p);
-            return p;
+consteval False solve() {
+    std::optional<False> fake;
+    Or<False, Not<False>>().elim(
+        [&](False fal) -> Or<False, Not<False>> {
+            fake.emplace(fal);
+            return fal;
         },
-        [&](Not<P> not_p) -> Or<P, Not<P>> { return not_p; }
+        [&](Not<False> not_fal) -> Or<False, Not<False>> { return not_fal; }
     );
     return fake.value();
 }
