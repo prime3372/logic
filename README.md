@@ -97,7 +97,7 @@ protected:
 
 `PropBase` を継承した命題クラス `P` は、`PropBase` に対してデフォルトコンストラクタ `P()` へのアクセスを許可しつつ、`PropBase::object` を介して必要なオブジェクトを入手するものとします。
 
-※ `PropType` は命題クラスを表すコンセプトです。`std::is_base_of_v` を用いて `PropBase` の派生クラスであるか判定しています。
+`PropType` は命題クラスを表すコンセプトです。`std::is_base_of_v` を用いて `PropBase` の派生クラスであるか判定しています。
 
 ※ `PropBase()` に付いている `consteval` はコンパイル時評価を強制するための修飾子です。`constexpr` と異なり、コンパイル時評価できなかった場合にはエラーが出ます。本稿の形式的証明ツールはコンパイルのみで完結するので、すべての関数に例外なく `consteval` を付けています。
 
@@ -106,18 +106,12 @@ protected:
 ```cpp
 class False final : PropBase {
 public:
-    consteval False(const False& other) {
-        initialized = other.initialized;
-    }
-
     template <PropType P>
     consteval P explode() const { return PropBase::object<P>; }
 
 private:
     friend class PropBase;
     consteval False() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -125,14 +119,7 @@ private:
 
 メンバ関数 `explode` は爆発律を実装したものです。一度 `False` のオブジェクトを作ることができれば、`explode` を使ってあらゆる命題を証明できます。
 
-※ コピーコンストラクタ `False(const False& other)` 内に書かれている処理は不正な初期化を防ぐためのものです。例えば、次のような自己初期化はC\+\+では定義された動作であり、初期化されていない `fal` を `fal` にコピーする挙動になります。
-```
-False fal(fal);
-```
-コピーコンストラクタ内に `fal.initialized` を読み取る処理を書くことで、未初期化の変数の値が読み取られたことをコンパイラが検出してエラーを吐いてくれます。
-コピーコンストラクタの実装はすべての命題クラスで共通なので、以降説明を省略します。
-
-※ `private:` セクション内に書かれている `friend` 宣言とデフォルトコンストラクタは、前節で説明した通り `PropBase` 内で `False` のオブジェクトを作れるようにしたものです。この部分の実装もすべての命題クラスで共通なので、以降説明を省略します。
+`private:` セクション内に書かれている `friend` 宣言とデフォルトコンストラクタは、前節で説明した通り `PropBase` 内で `False` のオブジェクトを作れるようにしたものです。この部分の実装はすべての命題クラスで共通なので、以降説明を省略します。
 
 ### 3.4. `Not`
 
@@ -144,17 +131,12 @@ public:
         False q = f(PropBase::object<P>);
         initialized = true;
     }
-    consteval Not(const Not& other) {
-        initialized = other.initialized;
-    }
 
     consteval False operator()(P) const { return PropBase::object<False>; }
 
 private:
     friend class PropBase;
     consteval Not() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -178,9 +160,6 @@ template <PropType P, PropType Q>
 class And final : PropBase {
 public:
     consteval And(P, Q) : initialized(true) {}
-    consteval And(const And& other) {
-        initialized = other.initialized;
-    }
 
     const P left = PropBase::object<P>;
     const Q right = PropBase::object<Q>;
@@ -188,8 +167,6 @@ public:
 private:
     friend class PropBase;
     consteval And() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -199,7 +176,7 @@ private:
 
 メンバ変数 `left`, `right`は  $\land$ 除去則を表しています。
 
-### 3.6 `Or`
+### 3.6. `Or`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -208,9 +185,6 @@ public:
     consteval Or() requires (std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>>) : initialized(true) {}
     consteval Or(P) : initialized(true) {}
     consteval Or(Q) requires (!std::same_as<P, Q>) : initialized(true) {}
-    consteval Or(const Or& other) {
-        initialized = other.initialized;
-    }
 
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
@@ -222,8 +196,6 @@ public:
 private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -245,17 +217,12 @@ public:
         Q q = f(PropBase::object<P>);
         initialized = true;
     }
-    consteval Impl(const Impl& other) {
-        initialized = other.initialized;
-    }
 
     consteval Q operator()(P) const { return PropBase::object<Q>; }
 
 private:
     friend class PropBase;
     consteval Impl() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -265,7 +232,7 @@ private:
 
 `operator()` は $\rightarrow$ 導入則を表しています。`P` のオブジェクトを受け取って `Q` のオブジェクトを返します。
 
-### 3.8 `Equiv`
+### 3.8. `Equiv`
 
 ```cpp
 template <PropType P, PropType Q>
@@ -276,19 +243,16 @@ public:
         P p = g(PropBase::object<Q>);
         initialized = true;
     }
-    consteval Equiv(const Equiv& other) {
-        initialized = other.initialized;
-    }
 
     consteval Q operator()(P) const { return PropBase::object<Q>; }
 
-    consteval P operator()(Q) const requires (!std::same_as<P, Q>) { return PropBase::object<P>; }
+    consteval P operator()(Q) const requires (!std::same_as<P, Q>) {
+        return PropBase::object<P>;
+    }
 
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
-
-    bool initialized;
 };
 ```
 
@@ -298,11 +262,37 @@ private:
 
 `operator()` は $\leftrightarrow$ 導入則を表しています。`P`, `Q` のオブジェクトのうち一方を受け取って他方を返します。
 
+### 3.9. 補足
+
+上で挙げた実装ではコピーコンストラクタをデフォルト定義していましたが、実はこのままだと問題が生じます。例えば次のような初期化がコンパイルを通過します。
+```
+False fal(fal);
+```
+上のような自己初期化はC\+\+では定義された動作であり、初期化されていない `fal` を `fal` にコピーする挙動になります。こういった不正な初期化を防ぐには、コピーコンストラクタ内に　`fal` のメンバ変数を読み取る処理を加えればよいです。
+```cpp
+class False final : PropBase {
+public:
+    consteval False(const False& other) {
+        initialized = other.initialized;
+    }
+
+    template <PropType P>
+    consteval P explode() const { return PropBase::object<P>; }
+
+private:
+    friend class PropBase;
+    consteval False() : initialized(true) {}
+
+    bool initialized;
+};
+```
+`other` が正しく初期化されていない場合、コンパイラが未初期化の `other.initialized` を読み取ったことを検知してエラーを出してくれます。
 
 ## 4. 命題論理の証明例
 
 ### 4.1. 対偶律
 
+$(P\rightarrow Q)\leftrightarrow(\lnot Q\rightarrow\lnot P)$
 ```cpp
 using P = Prop<0>;
 using Q = Prop<1>;
@@ -332,10 +322,114 @@ int main() {
 }
 ```
 
+### 4.2. ド・モルガンの法則
 
+$\lnot(P\land Q)\leftrightarrow\lnot P\lor\lnot Q$
+```cpp
+using P = Prop<0>;
+using Q = Prop<1>;
 
+consteval Equiv<Not<And<P, Q>>, Or<Not<P>, Not<Q>>> solve() {
+    return {
+        [&](Not<And<P, Q>> not_and_p_q) -> Or<Not<P>, Not<Q>> {
+            return Or<P, Not<P>>().elim(
+                [&](P p) -> Or<Not<P>, Not<Q>> {
+                    return Not<Q>([&](Q q) -> False {
+                        return not_and_p_q({p, q});
+                    });
+                },
+                [&](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
+            );
+        },
+        [&](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
+            return [&](And<P, Q> and_p_q) -> False {
+                return or_not_p_not_q.elim(
+                    [&](Not<P> not_p) -> False { return not_p(and_p_q.left); },
+                    [&](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
+                );
+            };
+        }
+    };
+}
 
+int main() {
+    solve();
+}
+```
 
+$\lnot(P\lor Q)\leftrightarrow\lnot P\land\lnot Q$
+```cpp
+using P = Prop<0>;
+using Q = Prop<1>;
+
+consteval Equiv<Not<Or<P, Q>>, And<Not<P>, Not<Q>>> solve() {
+    return {
+        [&](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
+            return {
+                [&](P p) -> False { return not_or_p_q(p); },
+                [&](Q q) -> False { return not_or_p_q(q); }
+            };
+        },
+        [&](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
+            return [&](Or<P, Q> or_p_q) -> False {
+                return or_p_q.elim(
+                    [&](P p) -> False { return and_not_p_not_q.left(p); },
+                    [&](Q q) -> False { return and_not_p_not_q.right(q); }
+                );
+            };
+        }
+    };
+}
+
+int main() {
+    solve();
+}
+```
+
+### 4.3. 二重否定の導入・除去
+
+$P\leftrightarrow\lnot\lnot P$
+```cpp
+using P = Prop<0>;
+
+consteval Equiv<P, Not<Not<P>>> solve() {
+    return {
+        [&](P p) -> Not<Not<P>> {
+            return [&](Not<P> not_p) -> False {
+                return not_p(p);
+            };
+        },
+        [&](Not<Not<P>> not_not_p) -> P {
+            return Or<P, Not<P>>().elim(
+                [&](P p) -> P { return p; },
+                [&](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
+            );
+        }
+    };
+}
+
+int main() {
+    solve();
+}
+```
+
+### 4.4. 同一律
+
+$P\leftrightarrow P$
+```cpp
+using P = Prop<0>;
+
+consteval Equiv<P, P> solve() {
+    return {
+        [&](P p) -> P { return p; },
+        [&](P p) -> P { return p; }
+    };
+}
+
+int main() {
+    solve();
+}
+```
 
 ## 5. 述語論理の推論
 
