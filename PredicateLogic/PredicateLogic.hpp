@@ -54,7 +54,9 @@ public:
     }
 
     template <PropType P>
-    consteval P explode() const { return PropBase::object<P>; }
+    consteval P explode() const {
+        return PropBase::object<P>;
+    }
 
 private:
     friend class PropBase;

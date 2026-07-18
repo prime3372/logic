@@ -107,7 +107,9 @@ protected:
 class False final : PropBase {
 public:
     template <PropType P>
-    consteval P explode() const { return PropBase::object<P>; }
+    consteval P explode() const {
+        return PropBase::object<P>;
+    }
 
 private:
     friend class PropBase;
@@ -132,7 +134,9 @@ public:
         initialized = true;
     }
 
-    consteval False operator()(P) const { return PropBase::object<False>; }
+    consteval False operator()(P) const {
+        return PropBase::object<False>;
+    }
 
 private:
     friend class PropBase;
@@ -218,7 +222,9 @@ public:
         initialized = true;
     }
 
-    consteval Q operator()(P) const { return PropBase::object<Q>; }
+    consteval Q operator()(P) const {
+        return PropBase::object<Q>;
+    }
 
 private:
     friend class PropBase;
