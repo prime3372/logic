@@ -18,7 +18,6 @@ template <class Tuple, template <class...> class Target>
 using ApplyType = typename ApplyType_Class<Tuple, Target>::type;
 
 
-
 template <class P, class x, class t>
 class ReplaceType_Class;
 
