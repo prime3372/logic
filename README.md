@@ -1,5 +1,18 @@
 # C++で形式的証明
 
+## 目次
+
+- 1. はじめに
+- 2. 命題論理の公理・推論規則
+- 3. 命題論理の実装
+- 4. 命題論理の証明例
+- 5. 述語論理の公理・推論規則
+- 6. 述語論理の実装
+- 7. 述語論理の証明例
+- 8. 実装の全体像
+- 9. 参考資料
+- 10. アピールポイント
+
 ## 1. はじめに
 
 本稿では述語論理の形式的証明ツールをC\+\+で実装します。形式的証明のコンパイラをC\+\+で書くという意味ではなく、C\+\+の言語機能をそのまま形式的証明の文法に利用し、C\+\+のコードとして形式的証明をコンパイルすることを目指します。正しい証明に対してコンパイルが通るようにすることはもちろん、常識的な範囲の間違いを含む証明に対してコンパイルエラーを出すことも目標にします。
@@ -53,7 +66,7 @@
 ### 3.1. 基本方針
 
 プログラミング上で数学的な証明を取り扱うために、次のような対応関係を考えます。
-| 数学 | プログラミング |
+| 数学 | プログラミング (C\+\+) |
 | ----- | ----- |
 | 命題 | クラス |
 | 証明 | オブジェクト |
@@ -113,7 +126,7 @@ public:
 
 private:
     friend class PropBase;
-    consteval False() : initialized(true) {}
+    consteval False() {}
 };
 ```
 
@@ -131,7 +144,6 @@ class Not final : PropBase {
 public:
     consteval Not(auto f) {
         False q = f(PropBase::object<P>);
-        initialized = true;
     }
 
     consteval False operator()(P) const {
@@ -140,7 +152,7 @@ public:
 
 private:
     friend class PropBase;
-    consteval Not() : initialized(true) {}
+    consteval Not() {}
 };
 ```
 
@@ -162,14 +174,14 @@ using Not = Impl<P, False>
 template <PropType P, PropType Q>
 class And final : PropBase {
 public:
-    consteval And(P, Q) : initialized(true) {}
+    consteval And(P, Q) {}
 
     const P left = PropBase::object<P>;
     const Q right = PropBase::object<Q>;
 
 private:
     friend class PropBase;
-    consteval And() : initialized(true) {}
+    consteval And() {}
 };
 ```
 
@@ -185,9 +197,9 @@ private:
 template <PropType P, PropType Q>
 class Or final : PropBase {
 public:
-    consteval Or() requires (std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>>) : initialized(true) {}
-    consteval Or(P) : initialized(true) {}
-    consteval Or(Q) requires (!std::same_as<P, Q>) : initialized(true) {}
+    consteval Or() requires (std::same_as<Q, Not<P>> || std::same_as<P, Not<Q>>) {}
+    consteval Or(P) {}
+    consteval Or(Q) requires (!std::same_as<P, Q>) {}
 
     consteval auto elim(auto f, auto g) const {
         auto rf(f(PropBase::object<P>));
@@ -198,7 +210,7 @@ public:
 
 private:
     friend class PropBase;
-    consteval Or() : initialized(true) {}
+    consteval Or() {}
 };
 ```
 
@@ -208,7 +220,7 @@ private:
 
 2, 3番目のコンストラクタは $\lor$ 導入則を表しています。`P` または `Q` のオブジェクトから `Or<P, Q>` のオブジェクトを構築できます。
 
-メンバ関数 `elim` は $\lor$ 除去則を表しています。2つのラムダ式 `f`, `g` にそれぞれ `P`, `Q` のオブジェクトを渡して同じクラスのオブジェクトが返ってくるか検証します。戻り値としてそのオブジェクトを返します。
+メンバ関数 `elim` は $\lor$ 除去則を表しています。2つのラムダ式 `f`, `g` を引数として受け取り、それぞれ `P`, `Q` のオブジェクトを渡して同じクラスのオブジェクトが返ってくるか検証します。戻り値としてそのオブジェクトを返します。
 
 ### 3.7. `Impl`
 
@@ -218,7 +230,6 @@ class Impl final : PropBase {
 public:
     consteval Impl(auto f) {
         Q q = f(PropBase::object<P>);
-        initialized = true;
     }
 
     consteval Q operator()(P) const {
@@ -227,7 +238,7 @@ public:
 
 private:
     friend class PropBase;
-    consteval Impl() : initialized(true) {}
+    consteval Impl() {}
 };
 ```
 
@@ -246,7 +257,6 @@ public:
     consteval Equiv(auto f, auto g) {
         Q q = f(PropBase::object<P>);
         P p = g(PropBase::object<Q>);
-        initialized = true;
     }
 
     consteval Q operator()(P) const { return PropBase::object<Q>; }
@@ -257,13 +267,13 @@ public:
 
 private:
     friend class PropBase;
-    consteval Equiv() : initialized(true) {}
+    consteval Equiv() {}
 };
 ```
 
 `Impl` クラステンプレートは論理記号 $\leftrightarrow$ に対応します。
 
-コンストラクタ `Impl(auto f)` は $\leftrightarrow$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか、ラムダ式 `g` に `Q` のオブジェクトを渡して `P` のオブジェクトが返ってくるか検証します。
+コンストラクタ `Equiv(auto f, auto g)` は $\leftrightarrow$ 導入則を表しています。2つのラムダ式 `f`, `g` を受け取り、ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか、ラムダ式 `g` に `Q` のオブジェクトを渡して `P` のオブジェクトが返ってくるか検証します。
 
 `operator()` は $\leftrightarrow$ 導入則を表しています。`P`, `Q` のオブジェクトのうち一方を受け取って他方を返します。
 
@@ -291,7 +301,7 @@ private:
     bool initialized;
 };
 ```
-`other` が正しく初期化されていない場合、コンパイラが未初期化の `other.initialized` を読み取ったことを検知してエラーを出してくれます。
+`other` が正しく初期化されていない場合、コンパイラが未初期化の `other.initialized` を読み取ったことを検知してエラーを出してくれます。（C\+\+の仕様上、実行時の未定義動作はコンパイル時にはエラーになります）
 
 ## 4. 命題論理の証明例
 
@@ -304,18 +314,18 @@ using Q = Prop<1>;
 
 consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
     return {
-        [=](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
-            return [=](Not<Q> not_q) -> Not<P> {
-                return [=](P p) -> False {
+        [&](Impl<P, Q> impl_p_q) -> Impl<Not<Q>, Not<P>> {
+            return [&](Not<Q> not_q) -> Not<P> {
+                return [&](P p) -> False {
                     return not_q(impl_p_q(p));
                 };
             };
         },
-        [=](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
-            return [=](P p) -> Q {
+        [&](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
+            return [&](P p) -> Q {
                 return Or<Q, Not<Q>>().elim(
-                    [=](Q q) -> Q { return q; },
-                    [=](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
+                    [&](Q q) -> Q { return q; },
+                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
                 );
             };
         }
@@ -336,21 +346,21 @@ using Q = Prop<1>;
 
 consteval Equiv<Not<And<P, Q>>, Or<Not<P>, Not<Q>>> solve() {
     return {
-        [=](Not<And<P, Q>> not_and_p_q) -> Or<Not<P>, Not<Q>> {
+        [&](Not<And<P, Q>> not_and_p_q) -> Or<Not<P>, Not<Q>> {
             return Or<P, Not<P>>().elim(
-                [=](P p) -> Or<Not<P>, Not<Q>> {
-                    return Not<Q>([=](Q q) -> False {
+                [&](P p) -> Or<Not<P>, Not<Q>> {
+                    return Not<Q>([&](Q q) -> False {
                         return not_and_p_q({p, q});
                     });
                 },
-                [=](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
+                [&](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
             );
         },
-        [=](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
-            return [=](And<P, Q> and_p_q) -> False {
+        [&](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
+            return [&](And<P, Q> and_p_q) -> False {
                 return or_not_p_not_q.elim(
-                    [=](Not<P> not_p) -> False { return not_p(and_p_q.left); },
-                    [=](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
+                    [&](Not<P> not_p) -> False { return not_p(and_p_q.left); },
+                    [&](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
                 );
             };
         }
@@ -369,17 +379,17 @@ using Q = Prop<1>;
 
 consteval Equiv<Not<Or<P, Q>>, And<Not<P>, Not<Q>>> solve() {
     return {
-        [=](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
+        [&](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
             return {
-                [=](P p) -> False { return not_or_p_q(p); },
-                [=](Q q) -> False { return not_or_p_q(q); }
+                [&](P p) -> False { return not_or_p_q(p); },
+                [&](Q q) -> False { return not_or_p_q(q); }
             };
         },
-        [=](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
-            return [=](Or<P, Q> or_p_q) -> False {
+        [&](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
+            return [&](Or<P, Q> or_p_q) -> False {
                 return or_p_q.elim(
-                    [=](P p) -> False { return and_not_p_not_q.left(p); },
-                    [=](Q q) -> False { return and_not_p_not_q.right(q); }
+                    [&](P p) -> False { return and_not_p_not_q.left(p); },
+                    [&](Q q) -> False { return and_not_p_not_q.right(q); }
                 );
             };
         }
@@ -399,15 +409,15 @@ using P = Prop<0>;
 
 consteval Equiv<P, Not<Not<P>>> solve() {
     return {
-        [=](P p) -> Not<Not<P>> {
-            return [=](Not<P> not_p) -> False {
+        [&](P p) -> Not<Not<P>> {
+            return [&](Not<P> not_p) -> False {
                 return not_p(p);
             };
         },
-        [=](Not<Not<P>> not_not_p) -> P {
+        [&](Not<Not<P>> not_not_p) -> P {
             return Or<P, Not<P>>().elim(
-                [=](P p) -> P { return p; },
-                [=](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
+                [&](P p) -> P { return p; },
+                [&](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
             );
         }
     };
@@ -426,8 +436,8 @@ using P = Prop<0>;
 
 consteval Equiv<P, P> solve() {
     return {
-        [=](P p) -> P { return p; },
-        [=](P p) -> P { return p; }
+        [&](P p) -> P { return p; },
+        [&](P p) -> P { return p; }
     };
 }
 
@@ -437,6 +447,8 @@ int main() {
 ```
 
 ## 5. 述語論理の推論
+
+述語論理
 
 
 ## 6. 述語論理の実装
@@ -449,3 +461,6 @@ int main() {
 完成した述語論理の形式的証明ツールを以下に示します。
 
 ## 9. 参考資料
+
+
+## 10. アピールポイント
