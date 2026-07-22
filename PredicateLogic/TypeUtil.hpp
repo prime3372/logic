@@ -6,16 +6,13 @@
 template <class T, class U, class V>
 class ReplaceTypeImplementation;
 
-template <class T, class U, class V>
-using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
-
 template <template <class...> class Template, class TemplateArgs, class U, class V>
 class ReplaceTypeHelper {};
 
 template <template <class...> class Template, class U, class V, class... Args>
 class ReplaceTypeHelper<Template, std::tuple<Args...>, U, V> {
 public:
-    using result = Template<ReplaceType<Args, U, V>...>;
+    using result = Template<typename ReplaceTypeImplementation<Args, U, V>::result...>;
 };
 
 template <class T, class U, class V>
@@ -28,3 +25,7 @@ public:
             typename ReplaceTypeHelper<T::template Template, typename T::TemplateArgs, U, V>::result
         >;
 };
+
+template <class T, class U, class V>
+using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
+
