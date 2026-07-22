@@ -689,6 +689,8 @@ using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
 
 ### 6.2. 基底クラス
 
+命題クラスの基底クラスは命題論理のもの (3.2.節参照) と同じなので省略します。述語論理では、新たに変数クラスの基底クラスを次のように実装します。
+
 ```cpp
 class VarBase {};
 
@@ -704,7 +706,11 @@ class FreeVarBase : VarBase {};
 
 template <class T>
 concept FreeVarType = std::is_base_of_v<FreeVarBase, T>;
+```
 
+
+
+```cpp
 template <class T>
 concept TakeSome = FreeVarType<T>;
 
