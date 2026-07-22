@@ -249,7 +249,7 @@ public:
     using TemplateArgs = std::tuple<x, P>;
 
     consteval All(auto f) {
-        auto p(f.template operator()<t>());
+        auto p = f.template operator()<t>();
         static_assert(std::same_as<decltype(p), ReplaceType<P, x, t>>);
         initialized = true;
     }
@@ -258,7 +258,9 @@ public:
     }
 
     template <FreeVarType a>
-    consteval ReplaceType<P, x, a> elim() { return PropBase::object<ReplaceType<P, x, a>>; }
+    consteval ReplaceType<P, x, a> elim() {
+        return PropBase::object<ReplaceType<P, x, a>>;
+    }
 
     static void* operator new(size_t) = delete;
     static void* operator new[](size_t) = delete;
@@ -297,7 +299,7 @@ public:
     }
 
     consteval auto elim(auto f) {
-        auto q(f.template operator()<t>(PropBase::object<ReplaceType<P, x, t>>));
+        auto q = f.template operator()<t>(PropBase::object<ReplaceType<P, x, t>>);
         return PropBase::object<decltype(q)>;
     }
 
