@@ -18,39 +18,39 @@ template <class Tuple, template <class...> class Target>
 using ApplyType = typename ApplyType_Class<Tuple, Target>::type;
 
 
-template <class P, class x, class t>
+template <class T, class U, class V>
 class ReplaceType_Class;
 
-template <class P, class x, class t>
-using ReplaceType = typename ReplaceType_Class<P, x, t>::type;
+template <class T, class U, class V>
+using ReplaceType = typename ReplaceType_Class<T, U, V>::type;
 
-template <class Tuple, class x, class t, class Is = std::make_index_sequence<std::tuple_size_v<Tuple>>>
+template <class Tuple, class U, class V, class Is = std::make_index_sequence<std::tuple_size_v<Tuple>>>
 class ReplaceTypeHelper_Class {
     static_assert(false);
 };
 
-template <class Tuple, class x, class t, size_t... Is>
-class ReplaceTypeHelper_Class<Tuple, x, t, std::index_sequence<Is...>> {
+template <class Tuple, class U, class V, size_t... Is>
+class ReplaceTypeHelper_Class<Tuple, U, V, std::index_sequence<Is...>> {
 public:
     using type =
         std::tuple<
-            ReplaceType<std::tuple_element_t<Is, Tuple>, x, t>...
+            ReplaceType<std::tuple_element_t<Is, Tuple>, U, V>...
         >;
 };
 
-template <class Tuple, class x, class t>
-using ReplaceTypeHelper = ReplaceTypeHelper_Class<Tuple, x, t>::type;
+template <class Tuple, class U, class V>
+using ReplaceTypeHelper = ReplaceTypeHelper_Class<Tuple, U, V>::type;
 
-template <class P, class x, class t>
+template <class T, class U, class V>
 class ReplaceType_Class {
 public:
     using type =
         std::conditional_t<
-            std::same_as<P, x>,
-            t,
+            std::same_as<T, U>,
+            V,
             ApplyType<
-                ReplaceTypeHelper<typename P::TemplateArgs, x, t>,
-                P::template Template
+                ReplaceTypeHelper<typename T::TemplateArgs, U, V>,
+                T::template Template
             >
         >;
 };

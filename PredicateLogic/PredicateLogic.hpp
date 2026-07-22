@@ -8,6 +8,7 @@
 
 #include "TypeUtil.hpp"
 
+
 class PropBase;
 
 template <class P>
@@ -20,6 +21,7 @@ protected:
     template <PropType P>
     static constexpr P object = P();
 };
+
 
 class VarBase {};
 
@@ -113,6 +115,9 @@ public:
 
     const P left = PropBase::object<P>;
     const Q right = PropBase::object<Q>;
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
