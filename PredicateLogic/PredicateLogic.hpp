@@ -38,12 +38,6 @@ class FreeVarBase : VarBase {};
 template <class T>
 concept FreeVarType = std::is_base_of_v<FreeVarBase, T>;
 
-template <class T>
-concept TakeSome = FreeVarType<T>;
-
-template <class T>
-concept TakeAny = FreeVarType<T>;
-
 
 class False final : PropBase {
 public:

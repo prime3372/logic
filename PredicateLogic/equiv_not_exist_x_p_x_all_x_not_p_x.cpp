@@ -7,14 +7,14 @@ using x = Bound<0>;
 consteval Equiv<NotExist<x, P<x>>, All<x, NotP<x>>> solve() {
     return {
         [&](NotExist<x, P<x>> not_exist_x_p_x) -> All<x, NotP<x>> {
-            return [&]<TakeAny a>() -> NotP<a> {
+            return [&]<class a>() -> NotP<a> {
                 return [&](P<a> p_a) -> False { return not_exist_x_p_x({a(), p_a}); };
             };
         },
         [&](All<x, NotP<x>> all_x_not_p_x) -> NotExist<x, P<x>> {
             return [&](Exist<x, P<x>> exist_x_p_x) -> False {
                 return exist_x_p_x.elim(
-                    [&]<TakeSome a>(P<a> p_a) -> False {
+                    [&]<class a>(P<a> p_a) -> False {
                         return all_x_not_p_x.elim<a>()(p_a);
                     }
                 );
