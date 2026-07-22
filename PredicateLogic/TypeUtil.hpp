@@ -28,4 +28,3 @@ public:
 
 template <class T, class U, class V>
 using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
-
