@@ -219,28 +219,6 @@ private:
 };
 
 
-template <size_t id, VarType... P>
-class Pred final : PropBase {
-public:
-    template <VarType... Args>
-    using Template = Pred<id, Args...>;
-    using TemplateArgs = std::tuple<P...>;
-
-    consteval Pred(const Pred& other) {
-        initialized = other.initialized;
-    }
-
-    static void* operator new(size_t) = delete;
-    static void* operator new[](size_t) = delete;
-
-private:
-    friend class PropBase;
-    consteval Pred() : initialized(true) {}
-
-    bool initialized;
-};
-
-
 template <BoundVarType x, PropType P>
 class All final : PropBase {
 public:
@@ -323,6 +301,28 @@ private:
 
 template <BoundVarType x, PropType P>
 using NotExist = Not<Exist<x, P>>;
+
+
+template <size_t id, VarType... P>
+class Pred final : PropBase {
+public:
+    template <VarType... Args>
+    using Template = Pred<id, Args...>;
+    using TemplateArgs = std::tuple<P...>;
+
+    consteval Pred(const Pred& other) {
+        initialized = other.initialized;
+    }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
+private:
+    friend class PropBase;
+    consteval Pred() : initialized(true) {}
+
+    bool initialized;
+};
 
 
 template <size_t id>
