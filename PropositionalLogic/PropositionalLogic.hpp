@@ -157,6 +157,7 @@ public:
     consteval Q operator()(P) const {
         return PropBase::object<Q>;
     }
+    
     consteval P operator()(Q) const requires (!std::same_as<P, Q>) {
         return PropBase::object<P>;
     }

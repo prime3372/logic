@@ -11,8 +11,12 @@ consteval Equiv<P, Not<Not<P>>> solve() {
         },
         [&](Not<Not<P>> not_not_p) -> P {
             return Or<P, Not<P>>().elim(
-                [&](P p) -> P { return p; },
-                [&](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
+                [&](P p) -> P {
+                    return p;
+                },
+                [&](Not<P> not_p) -> P {
+                    return not_not_p(not_p).explode<P>();
+                }
             );
         }
     };

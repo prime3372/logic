@@ -175,6 +175,7 @@ private:
 template <class P>
 using Not = Impl<P, False>
 ```
+もっとも、間違った証明を書いたとき、エラーメッセージではエイリアスが元の名前に展開されるので、ただでさえ読みにくいエラーメッセージがさらに読みにくくなります。本稿ではこれを避けるためエイリアスを積極的には使っていません。
 
 ### 3.5. `And`
 
@@ -267,7 +268,9 @@ public:
         P p = g(PropBase::object<Q>);
     }
 
-    consteval Q operator()(P) const { return PropBase::object<Q>; }
+    consteval Q operator()(P) const {
+        return PropBase::object<Q>;
+    }
 
     consteval P operator()(Q) const requires (!std::same_as<P, Q>) {
         return PropBase::object<P>;
@@ -328,7 +331,7 @@ private:
 
 #### ■ 補足2
 
-まだ問題があります。`Or` の `elim` 関数および `Impl`, `Equiv` のコンストラクタでは、仮定となる命題を直接ラムダ式に渡しています。
+もう一つ問題があります。`Or` の `elim` 関数および `Impl`, `Equiv` のコンストラクタでは、仮定となる命題を直接ラムダ式に渡しています。
 ```cpp
 consteval auto elim(auto f, auto g) const {
     auto rf = f(PropBase::object<P>);
@@ -348,20 +351,20 @@ consteval Equiv(auto f, auto g) {
     P p = g(PropBase::object<Q>);
 }
 ```
-この仮定はラムダ式の内部で使われることが前提ですが、多少工夫すれば外部に持ち出すコードも書けてしまいます。例えば次のコードがコンパイルを通過します。
+この仮定はラムダ式の内部のみで使われることが前提ですが、多少工夫すれば仮定を外部に持ち出すコードも書けてしまいます。例えば次のコードがコンパイルを通過します。
 ```cpp
-False* fake_ptr = nullptr;
+False* fal_ptr = nullptr;
 Or<False, Not<False>>().elim(
     [&](False fal) -> Or<False, Not<False>> {
-        fake_ptr = new False(fal);
+        fal_ptr = new False(fal);
         return fal;
     },
     [&](Not<False> not_fal) -> Or<False, Not<False>> {
         return not_fal;
     }
 );
-False fake = *fake_ptr;
-delete fake_ptr;
+False fal = *fal_ptr;
+delete fal_ptr;
 ```
 `new` 演算子を `delete` 定義することで上のコードはひとまずコンパイルエラーになります。
 ```cpp
@@ -386,11 +389,11 @@ private:
     bool initialized;
 };
 ```
-ところが、ポインタの代わりに共用体を使って初期化を遅延するとコンパイルエラーを回避できてしまいます。
+ところが、ポインタの代わりに共用体を使って初期化を遅延し、`std::construct_at` を使ってコピー構築するとコンパイルエラーを回避できてしまいます。
 ```cpp
 union Fake {
     char dummy;
-    False value;
+    False fal;
     constexpr Fake() : dummy(0) {}
 };
 
@@ -398,20 +401,20 @@ consteval False solve() {
     Fake fake;
     Or<False, Not<False>>().elim(
         [&](False fal) -> Or<False, Not<False>> {
-            std::construct_at(&fake.value, fal);
+            std::construct_at(&fake.fal, fal);
             return fal;
         },
         [&](Not<False> not_fal) -> Or<False, Not<False>> { return not_fal; }
     );
-    return fake.value;
+    return fake.fal;
 }
 
 int main() {
     solve();
 }
 ```
-これは、`std::optional` が共用体を使って
-このような手法をコンパイルエラーにする方法は思い付きませんでした。ラムダ式を実行するためには命題クラスのオブジェクトを与えるしかありませんが、ラムダ式が内部的にどのような処理を行っているか知る方法はほとんどないからです。
+定数式の文脈では、あらかじめ確保していおいたメモリ上にオブジェクトを構築すること (配置new) は通常できないのですが、`std::construct_at` はそれを実現するための特別な組み込み関数が用意されているらしいです。  
+このような手法をコンパイルエラーにする方法は思い付きませんでした。とはいえ、ユーザー側が不注意で `std::construct_at` を使って初期化を試みる状況はまず考えられないので、この問題には目を瞑ることにします。(本稿はユーザーが悪意を持って不正な証明を書くことを想定していません)
 
 ## 4. 命題論理の証明例
 
@@ -463,14 +466,20 @@ consteval Equiv<Not<And<P, Q>>, Or<Not<P>, Not<Q>>> solve() {
                         return not_and_p_q({p, q});
                     });
                 },
-                [&](Not<P> not_p) -> Or<Not<P>, Not<Q>> { return not_p; }
+                [&](Not<P> not_p) -> Or<Not<P>, Not<Q>> {
+                    return not_p;
+                }
             );
         },
         [&](Or<Not<P>, Not<Q>> or_not_p_not_q) -> Not<And<P, Q>> {
             return [&](And<P, Q> and_p_q) -> False {
                 return or_not_p_not_q.elim(
-                    [&](Not<P> not_p) -> False { return not_p(and_p_q.left); },
-                    [&](Not<Q> not_q) -> False { return not_q(and_p_q.right); }
+                    [&](Not<P> not_p) -> False {
+                        return not_p(and_p_q.left);
+                    },
+                    [&](Not<Q> not_q) -> False {
+                        return not_q(and_p_q.right);
+                    }
                 );
             };
         }
@@ -491,15 +500,23 @@ consteval Equiv<Not<Or<P, Q>>, And<Not<P>, Not<Q>>> solve() {
     return {
         [&](Not<Or<P, Q>> not_or_p_q) -> And<Not<P>, Not<Q>> {
             return {
-                [&](P p) -> False { return not_or_p_q(p); },
-                [&](Q q) -> False { return not_or_p_q(q); }
+                [&](P p) -> False {
+                    return not_or_p_q(p);
+                },
+                [&](Q q) -> False {
+                    return not_or_p_q(q);
+                }
             };
         },
         [&](And<Not<P>, Not<Q>> and_not_p_not_q) -> Not<Or<P, Q>> {
             return [&](Or<P, Q> or_p_q) -> False {
                 return or_p_q.elim(
-                    [&](P p) -> False { return and_not_p_not_q.left(p); },
-                    [&](Q q) -> False { return and_not_p_not_q.right(q); }
+                    [&](P p) -> False {
+                        return and_not_p_not_q.left(p);
+                    },
+                    [&](Q q) -> False {
+                        return and_not_p_not_q.right(q);
+                    }
                 );
             };
         }
