@@ -1,16 +1,19 @@
 #include "PropositionalLogic/PropositionalLogic.hpp"
-#include <optional>
 
 consteval False solve() {
-    std::optional<False> fake;
+    False* fake_ptr = nullptr;
     Or<False, Not<False>>().elim(
         [&](False fal) -> Or<False, Not<False>> {
-            fake.emplace(fal);
+            fake_ptr = new False(fal);
             return fal;
         },
-        [&](Not<False> not_fal) -> Or<False, Not<False>> { return not_fal; }
+        [&](Not<False> not_fal) -> Or<False, Not<False>> {
+            return not_fal;
+        }
     );
-    return fake.value();
+    False fake = *fake_ptr;
+    delete fake_ptr;
+    return fake;
 }
 
 int main() {

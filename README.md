@@ -2,16 +2,25 @@
 
 ## 目次
 
-- 1. はじめに
-- 2. 命題論理の公理・推論規則
-- 3. 命題論理の実装
-- 4. 命題論理の証明例
-- 5. 述語論理の公理・推論規則
-- 6. 述語論理の実装
-- 7. 述語論理の証明例
-- 8. 実装の全体像
-- 9. 参考資料
-- 10. アピールポイント
+- **1. はじめに**
+- **2. 命題論理の公理・推論規則**
+- **3. 命題論理の実装**
+   - **3.1. 基本方針**
+   - **3.2. 基底クラス**
+   - **3.3. `False`**
+   - **3.4. `Not`**
+   - **3.5. `And`**
+   - **3.6. `Or`**
+   - **3.7. `Impl`**
+   - **3.8. `Equiv`** 
+   - **3.9. `Prop`** 
+   - **3.10. 補足**  
+- **4. 命題論理の証明例**
+- **5. 述語論理の公理・推論規則**
+- **6. 述語論理の実装**
+- **7. 述語論理の証明例**
+- **8. 実装の全体像**
+- **9.  アピールポイント**
 
 ## 1. はじめに
 
@@ -19,7 +28,7 @@
 
 動作確認はすべてg\+\+で行っています。他の環境で動くかは確かめていません。  
 実際にコードを動かすときは次のコンパイルオプションを付けてください。
-```powershell
+```shell
 -fsyntax-only
 -std=c++23
 ```
@@ -28,38 +37,37 @@
 
 ## 2. 命題論理の公理・推論規則
 
-まずは述語論理の土台である命題論理を構築します。今回は記号として $\bot,\lnot,\land,\lor,\rightarrow,\leftrightarrow$ を使うこととし、公理および推論規則として以下を採用します。なお、$X\vdash Y$ で $X$ から $Y$ を推論できることを、$[X]\cdots Y$ で $X$ を仮定すれば $Y$ を導出できることを表すものとします。
-
+まずは述語論理の土台である命題論理を構築します。今回は記号として $\bot,\lnot,\land,\lor,\to,\leftrightarrow$ を使うこととし、公理および推論規則として以下を採用します。
 
 - 公理
     - **排中律**
     $$P\lor\lnot P$$
 - 推論規則
     - **爆発律**
-    $$\bot\vdash P$$
+    $$\frac{\begin{array}{c}\bot\end{array}}{P}$$
     - **$\lnot$ 導入則**
-    $$[P]\cdots\bot\vdash\lnot P$$
+    $$\frac{\begin{array}{ccc}[P] \\ \vdots \\ \bot\end{array}}{\lnot P}$$
     - **$\lnot$ 除去則**
-    $$P,\lnot P\vdash\bot$$
+    $$\frac{\begin{array}{c}P & \lnot P\end{array}}{\bot}$$
     - **$\land$ 導入則**
-    $$P, Q \vdash P\land Q$$
+    $$\frac{\begin{array}{c}P & Q\end{array}}{P\land Q}$$
     - **$\land$ 除去則**
-    $$P\land Q\vdash P$$
-    $$P\land Q\vdash Q$$
+    $$\frac{\begin{array}{c}P\land Q\end{array}}{P}$$
+    $$\frac{\begin{array}{c}P\land Q\end{array}}{Q}$$
     - **$\lor$ 導入則**
-    $$P\vdash P\lor Q$$
-    $$Q\vdash P\lor Q$$
+    $$\frac{\begin{array}{c}P\end{array}}{P\lor Q}$$
+    $$\frac{\begin{array}{c}Q\end{array}}{P\lor Q}$$
     - **$\lor$ 除去則**
-    $$P\lor Q,[P]\cdots R,[Q]\cdots R\vdash R$$
-    - **$\rightarrow$ 導入則**
-    $$[P]\cdots Q\vdash P\rightarrow Q$$
-    - **$\rightarrow$ 除去則**
-    $$P,P\rightarrow Q\vdash Q$$
+    $$\frac{\begin{array}{ccc} & [P] & [Q] \\ & \vdots & \vdots \\ P\lor Q & R & R \end{array}}{R}$$
+    - **$\to$ 導入則**
+    $$\frac{\begin{array}{ccc}[P] \\ \vdots \\ Q\end{array}}{P\to Q}$$
+    - **$\to$ 除去則**
+    $$\frac{\begin{array}{c}P & P\to Q\end{array}}{Q}$$
     - **$\leftrightarrow$ 導入則**
-    $$[P]\cdots Q,[Q]\cdots P\vdash P\leftrightarrow Q$$
+    $$\frac{\begin{array}{ccc}[P] & [Q] \\ \vdots & \vdots \\ Q & P \end{array}}{P\leftrightarrow Q}$$
     - **$\leftrightarrow$ 除去則**
-    $$P,P\leftrightarrow Q\vdash Q$$
-    $$Q,P\leftrightarrow Q\vdash P$$
+    $$\frac{\begin{array}{c}P & P\leftrightarrow Q\end{array}}{Q}$$
+    $$\frac{\begin{array}{c}Q & P\leftrightarrow Q\end{array}}{P}$$
 
 ## 3. 命題論理の実装
 
@@ -75,19 +83,19 @@
 | 仮定する | 仮定を引数として受け取るラムダ式を定義する |
 | 仮定付きで証明する | 仮定を引数として受け取るラムダ式から目的の命題を返す |
 
-この対応関係の下で、論理記号 $\bot, \lnot,\land,\lor,\rightarrow,\leftrightarrow$ を以下のように実装することにします。
+この対応関係の下で、論理記号 $\bot, \lnot,\land,\lor,\to,\leftrightarrow$ を以下のように実装することにします。
 
 | 論理記号 | コンストラクタ | メンバ |
 | ------ | ----- | ----- |
 | $\bot$ | なし | 任意の命題を返す（**爆発律**） |
-| $\lnot A$ | $A$ を受け取って $\bot$ を返すラムダ式を要求（**$\lnot$ 導入則**） | $A$ を受け取って $\bot$ を返す（**$\lnot$ 除去則**） |
-| $A\land B$ | $A,B$ を両方とも要求（**$\land$ 導入則**） | $A, B$ をそれぞれ返す（**$\land$ 除去則**） |
-| $A\lor B$ | $A$ または $B$ の一方を要求（**$\lor$ 導入則**） | 「$A$ を受け取って $C$ を返すラムダ式」「$B$ を受け取って $C$ を返すラムダ式」の2つを受け取って $C$ を返す（**$\lor$ 除去則**） |
-| $A\rightarrow B$ | $A$ を受け取って $B$ を返すラムダ式を要求（**$\rightarrow$ 導入則**） | $A$ を受け取って $B$ を返す（**$\rightarrow$ 除去則**） | 
-| $A\leftrightarrow B$ | 「$A$ を受け取って $B$ を返すラムダ式」「$B$ を受け取って $A$ を返すラムダ式」の2つを要求（**$\leftrightarrow$ 導入則**） | $A, B$ の一方を受け取って他方を返す（**$\leftrightarrow$ 除去則**） | 
+| $\lnot P$ | $P$ を受け取って $\bot$ を返すラムダ式を要求（**$\lnot$ 導入則**） | $P$ を受け取って $\bot$ を返す（**$\lnot$ 除去則**） |
+| $P\land Q$ | $P,Q$ を両方とも要求（**$\land$ 導入則**） | $P,Q$ をそれぞれ返す（**$\land$ 除去則**） |
+| $P\lor Q$ | $P$ または $Q$ の一方を要求（**$\lor$ 導入則**） | 「$P$ を受け取って $R$ を返すラムダ式」「$Q$ を受け取って $R$ を返すラムダ式」の2つを受け取って $R$ を返す（**$\lor$ 除去則**） |
+| $P\to Q$ | $P$ を受け取って $Q$ を返すラムダ式を要求（**$\to$ 導入則**） | $P$ を受け取って $Q$ を返す（**$\to$ 除去則**） | 
+| $P\leftrightarrow Q$ | 「$P$ を受け取って $Q$ を返すラムダ式」「$Q$ を受け取って $P$ を返すラムダ式」の2つを要求（**$\leftrightarrow$ 導入則**） | $P, Q$ の一方を受け取って他方を返す（**$\leftrightarrow$ 除去則**） | 
 
-$A\lor\lnot A$ および $\lnot A\lor A$ はデフォルトコンストラクタを持つものとします。（**排中律**）  
-命題変数 $A,B,C,\ldots$ もクラスとして実装します。したがって $\bot$ 以外の論理記号はクラステンプレートとなります。
+$P\lor\lnot P$ および $\lnot P\lor P$ はデフォルトコンストラクタを持つものとします。（**排中律**）  
+命題変数 $P,Q,R,\ldots$ もクラスとして実装します。したがって $\bot$ 以外の論理記号はクラステンプレートとなります。
 
 ### 3.2. 基底クラス
 
@@ -189,7 +197,7 @@ private:
 
 コンストラクタ `And(P, Q)` は $\land$ 導入則を表しています。`P`, `Q` のオブジェクトから `And<P, Q>` のオブジェクトを構築できます。
 
-メンバ変数 `left`, `right`は  $\land$ 除去則を表しています。
+メンバ変数 `left`, `right` は  $\land$ 除去則を表しています。
 
 ### 3.6. `Or`
 
@@ -202,8 +210,8 @@ public:
     consteval Or(Q) requires (!std::same_as<P, Q>) {}
 
     consteval auto elim(auto f, auto g) const {
-        auto rf(f(PropBase::object<P>));
-        auto rg(g(PropBase::object<Q>));
+        auto rf = f(PropBase::object<P>));
+        auto rg = g(PropBase::object<Q>));
         static_assert(std::same_as<decltype(rf), decltype(rg)>);
         return PropBase::object<decltype(rf)>;
     }
@@ -242,11 +250,11 @@ private:
 };
 ```
 
-`Impl` クラステンプレートは論理記号 $\rightarrow$ に対応します。
+`Impl` クラステンプレートは論理記号 $\to$ に対応します。
 
-コンストラクタ `Impl(auto f)` は $\rightarrow$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか検証します。
+コンストラクタ `Impl(auto f)` は $\to$ 導入則を表しています。ラムダ式 `f` に `P` のオブジェクトを渡して `Q` のオブジェクトが返ってくるか検証します。
 
-`operator()` は $\rightarrow$ 導入則を表しています。`P` のオブジェクトを受け取って `Q` のオブジェクトを返します。
+`operator()` は $\to$ 導入則を表しています。`P` のオブジェクトを受け取って `Q` のオブジェクトを返します。
 
 ### 3.8. `Equiv`
 
@@ -277,7 +285,22 @@ private:
 
 `operator()` は $\leftrightarrow$ 導入則を表しています。`P`, `Q` のオブジェクトのうち一方を受け取って他方を返します。
 
-### 3.9. 補足
+### 3.9. `Prop`
+
+```cpp
+template <size_t id>
+class Prop final : PropBase {
+private:
+    friend class PropBase;
+    consteval Prop() {}
+};
+```
+
+`Prop` クラステンプレートは命題変数 $P,Q,R,\ldots$ に対応します。`id` に異なる非負整数を入れることで命題変数として区別します。`using` ディレクティブを用いて `using P = Prop<0>` などのエイリアスを付けることを想定しています。
+
+### 3.10. 補足
+
+#### ■ 補足1
 
 上で示した実装ではコピーコンストラクタをデフォルト定義していましたが、実はこのままだと問題が生じます。例えば次のような初期化がコンパイルを通過します。
 ```
@@ -301,13 +324,100 @@ private:
     bool initialized;
 };
 ```
-`other` が正しく初期化されていない場合、コンパイラが未初期化の `other.initialized` を読み取ったことを検知してエラーを出してくれます。（C\+\+の仕様上、実行時の未定義動作はコンパイル時にはエラーになります）
+`other` が正しく初期化されていない場合、コンパイラが未初期化の `other.initialized` を読み取ったことを検知してエラーを出してくれます。
+
+#### ■ 補足2
+
+まだ問題があります。`Or` の `elim` 関数および `Impl`, `Equiv` のコンストラクタでは、仮定となる命題を直接ラムダ式に渡しています。
+```cpp
+consteval auto elim(auto f, auto g) const {
+    auto rf = f(PropBase::object<P>);
+    auto rg = g(PropBase::object<Q>);
+    static_assert(std::same_as<decltype(rf), decltype(rg)>);
+    return PropBase::object<decltype(rf)>;
+}
+```
+```cpp
+consteval Impl(auto f) {
+    Q q = f(PropBase::object<P>);
+}
+```
+```cpp
+consteval Equiv(auto f, auto g) {
+    Q q = f(PropBase::object<P>);
+    P p = g(PropBase::object<Q>);
+}
+```
+この仮定はラムダ式の内部で使われることが前提ですが、多少工夫すれば外部に持ち出すコードも書けてしまいます。例えば次のコードがコンパイルを通過します。
+```cpp
+False* fake_ptr = nullptr;
+Or<False, Not<False>>().elim(
+    [&](False fal) -> Or<False, Not<False>> {
+        fake_ptr = new False(fal);
+        return fal;
+    },
+    [&](Not<False> not_fal) -> Or<False, Not<False>> {
+        return not_fal;
+    }
+);
+False fake = *fake_ptr;
+delete fake_ptr;
+```
+`new` 演算子を `delete` 定義することで上のコードはひとまずコンパイルエラーになります。
+```cpp
+class False final : PropBase {
+public:
+    consteval False(const False& other) {
+        initialized = other.initialized;
+    }
+
+    template <PropType P>
+    consteval P explode() const {
+        return PropBase::object<P>;
+    }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
+private:
+    friend class PropBase;
+    consteval False() : initialized(true) {}
+
+    bool initialized;
+};
+```
+ところが、ポインタの代わりに共用体を使って初期化を遅延するとコンパイルエラーを回避できてしまいます。
+```cpp
+union Fake {
+    char dummy;
+    False value;
+    constexpr Fake() : dummy(0) {}
+};
+
+consteval False solve() {
+    Fake fake;
+    Or<False, Not<False>>().elim(
+        [&](False fal) -> Or<False, Not<False>> {
+            std::construct_at(&fake.value, fal);
+            return fal;
+        },
+        [&](Not<False> not_fal) -> Or<False, Not<False>> { return not_fal; }
+    );
+    return fake.value;
+}
+
+int main() {
+    solve();
+}
+```
+これは、`std::optional` が共用体を使って
+このような手法をコンパイルエラーにする方法は思い付きませんでした。ラムダ式を実行するためには命題クラスのオブジェクトを与えるしかありませんが、ラムダ式が内部的にどのような処理を行っているか知る方法はほとんどないからです。
 
 ## 4. 命題論理の証明例
 
 ### 4.1. 対偶律
 
-$(P\rightarrow Q)\leftrightarrow(\lnot Q\rightarrow\lnot P)$
+$(P\to Q)\leftrightarrow(\lnot Q\to\lnot P)$
 ```cpp
 using P = Prop<0>;
 using Q = Prop<1>;
@@ -446,9 +556,11 @@ int main() {
 }
 ```
 
-## 5. 述語論理の推論
+## 5. 述語論理の公理・推論規則
 
-述語論理
+述語論理では、命題論理の記号に加えて新たに量化記号 $\forall,\exist$ を導入し、次の推論規則を追加します。
+
+- **$\forall$ 導入則**
 
 
 ## 6. 述語論理の実装
