@@ -18,6 +18,12 @@
 - **4. 命題論理の証明例**
 - **5. 述語論理の公理・推論規則**
 - **6. 述語論理の実装**
+  - **6.1. メタ関数**
+  - **6.2. 基底クラス**
+  - **6.3. `All` **
+  - **6.4. `Exist` **
+  - **6.5. `Pred` **
+  -  
 - **7. 述語論理の証明例**
 - **8. 実装の全体像**
 - **9.  アピールポイント**
@@ -299,7 +305,7 @@ private:
 };
 ```
 
-`Prop` クラステンプレートは命題変数 $P,Q,R,\ldots$ に対応します。`id` に異なる非負整数を入れることで命題変数として区別します。`using` ディレクティブを用いて `using P = Prop<0>` などのエイリアスを付けることを想定しています。
+`Prop` クラステンプレートは命題変数 $P,Q,R,\ldots$ に対応します。`id` に異なる非負整数を入れることで命題変数として区別します。`using` ディレクティブを用いて `using P = Prop<0>` などのエイリアスを定義することを想定しています。
 
 ### 3.10. 補足
 
@@ -309,16 +315,18 @@ private:
 ```
 False fal(fal);
 ```
-このような自己初期化はC\+\+では定義された動作であり、初期化されていない `fal` を `fal` にコピーする挙動になります。これを防ぐには、コピーコンストラクタ内に `fal` のメンバ変数を読み取る処理を加えればよいです。
+このような自己初期化はC\+\+では定義された動作であり、初期化されていない `fal` を `fal` にコピーする挙動になります。これを防ぐには、コピーコンストラクタ内に `fal` のメンバ変数を読み取る処理を書けばよいです。
 ```cpp
 class False final : PropBase {
 public:
     consteval False(const False& other) {
-        initialized = other.initialized;
+        initialized = other.initialized; // 追加
     }
 
     template <PropType P>
-    consteval P explode() const { return PropBase::object<P>; }
+    consteval P explode() const {
+        return PropBase::object<P>;
+    }
 
 private:
     friend class PropBase;
@@ -379,6 +387,7 @@ public:
         return PropBase::object<P>;
     }
 
+    // 追加
     static void* operator new(size_t) = delete;
     static void* operator new[](size_t) = delete;
 
@@ -413,8 +422,8 @@ int main() {
     solve();
 }
 ```
-定数式の文脈では、あらかじめ確保していおいたメモリ上にオブジェクトを構築すること (配置new) は通常できないのですが、`std::construct_at` はそれを実現するための特別な組み込み関数が用意されているらしいです。  
-このような手法をコンパイルエラーにする方法は思い付きませんでした。とはいえ、ユーザー側が不注意で `std::construct_at` を使って初期化を試みる状況はまず考えられないので、この問題には目を瞑ることにします。(本稿はユーザーが悪意を持って不正な証明を書くことを想定していません)
+定数式の文脈では、あらかじめ確保していおいたメモリ上にオブジェクトを構築すること (配置new) は通常できないのですが、`std::construct_at` はそれを可能にするための特別な組み込み関数が用意されているらしいです。  
+このような手法をコンパイルエラーにする方法は残念ながら思い付きませんでした。とはいえ、ユーザー側が不注意で `std::construct_at` を使って初期化を試みる状況はまず考えられないので、この問題には目を瞑ることにします。
 
 ## 4. 命題論理の証明例
 
@@ -437,8 +446,12 @@ consteval Equiv<Impl<P, Q>, Impl<Not<Q>, Not<P>>> solve() {
         [&](Impl<Not<Q>, Not<P>> impl_not_q_not_p) -> Impl<P, Q> {
             return [&](P p) -> Q {
                 return Or<Q, Not<Q>>().elim(
-                    [&](Q q) -> Q { return q; },
-                    [&](Not<Q> not_q) -> Q { return impl_not_q_not_p(not_q)(p).explode<Q>(); }
+                    [&](Q q) -> Q {
+                        return q;
+                    },
+                    [&](Not<Q> not_q) -> Q {
+                        return impl_not_q_not_p(not_q)(p).explode<Q>();
+                    }
                 );
             };
         }
@@ -543,8 +556,12 @@ consteval Equiv<P, Not<Not<P>>> solve() {
         },
         [&](Not<Not<P>> not_not_p) -> P {
             return Or<P, Not<P>>().elim(
-                [&](P p) -> P { return p; },
-                [&](Not<P> not_p) -> P { return not_not_p(not_p).explode<P>(); }
+                [&](P p) -> P {
+                    return p;
+                },
+                [&](Not<P> not_p) -> P {
+                    return not_not_p(not_p).explode<P>();
+                }
             );
         }
     };
@@ -563,8 +580,12 @@ using P = Prop<0>;
 
 consteval Equiv<P, P> solve() {
     return {
-        [&](P p) -> P { return p; },
-        [&](P p) -> P { return p; }
+        [&](P p) -> P {
+            return p;
+        },
+        [&](P p) -> P {
+            return p;
+        }
     };
 }
 
@@ -578,9 +599,118 @@ int main() {
 述語論理では、命題論理の記号に加えて新たに量化記号 $\forall,\exist$ を導入し、次の推論規則を追加します。
 
 - **$\forall$ 導入則**
+$$\frac{\begin{array}{c}P(a/x)\end{array}}{\forall xP}$$
+- **$\forall$ 除去則**
+$$\frac{\begin{array}{c}\forall xP\end{array}}{P(t / x)}$$
+- **$\exist$ 導入則**
+$$\frac{\begin{array}{c}P(t/x)\end{array}}{\exist xP}$$
+- **$\exist$ 除去則**
+$$\frac{\begin{array}{cc} & P(a/x) \\ & \vdots \\ \exist xP & Q \end{array}}{Q}$$
 
+$\forall$ 導入則および $\exist$ 除去則中の $a$ は自由変数です。
 
 ## 6. 述語論理の実装
+
+### 6.1. メタ関数
+
+論理記号の実装に入る前に、変数への代入を行うためのメタ関数を定義します。数学では単に $P(a/x)$ と書けばよいのですが、プログラミングでは命題 `P` の述語としての構造に現れるすべての `x` を洗い出して `a` に置き換えなければなりません。以下では、`ReplaceType` というメタ関数を定義し、`ReplaceType<T, U, V>` でクラス `T` の構造中に現れる `U` を `V` に置き換えたクラスを得ることを目指します。例えば、`T` が
+```cpp
+Hoge<U, Fuga<V, U>, W>
+```
+であれば
+`ReplaceType<T, U, V>` は
+```cpp
+Hoge<V, Fuga<V, V>, W>
+```
+となります。  
+
+大前提として、クラス `T` には元々のテンプレートがどういう構造だったかという情報が全く含まれていないので、まずは `T` 自体にそれらの情報を埋め込む必要があります。具体的には、すべての命題クラスに対して元々のテンプレートをメンバエイリアステンプレート `Template` に格納し、テンプレート引数の一覧を `std::tuple` の形でメンバエイリアス `TemplateArgs` に格納にします。  
+`And` クラステンプレートを例にとると次のようになります。
+
+```cpp
+template <PropType P, PropType Q>
+class And final : PropBase {
+public:
+    template <PropType T, PropType U>
+    using Template = And<T, U>;
+    using TemplateArgs = std::tuple<P, Q>;
+
+    // 以下略
+};
+```
+テンプレートではないクラスについても、整合性をとるために引数が空のエイリアステンプレートと `std::tuple` を用意します。`False` クラスを例にとると次のようになります。
+```cpp
+class False final : PropBase {
+public:
+    template <class _ = void>
+    using Template = False;
+    using TemplateArgs = std::tuple<>;
+
+    // 以下略
+};
+```
+
+
+この前提の下で、`ReplaceType<T, U, V>` は次のようなメタ関数として実装できます。
+- `T` が `U` に一致しているならば `V` を返す。
+- そうでなければ、`T::TemplateArgs` が `std::tuple<Args...>` に一致するとして、`T::Template<ReplaceType<Args[0], U, V>, ReplaceType<Args[1], U, V>, ...>` を返す。
+
+
+言葉で説明しても分かりにくいと思うので実装を載せます。
+```cpp
+template <class T, class U, class V>
+class ReplaceTypeImplementation;
+
+template <template <class...> class Template, class TemplateArgs, class U, class V>
+class ReplaceTypeHelper {};
+
+template <template <class...> class Template, class U, class V, class... Args>
+class ReplaceTypeHelper<Template, std::tuple<Args...>, U, V> {
+public:
+    using result = Template<typename ReplaceTypeImplementation<Args, U, V>::result...>;
+};
+
+template <class T, class U, class V>
+class ReplaceTypeImplementation {
+public:
+    using result =
+        std::conditional_t<
+            std::same_as<T, U>,
+            V,
+            typename ReplaceTypeHelper<T::template Template, typename T::TemplateArgs, U, V>::result
+        >;
+};
+
+template <class T, class U, class V>
+using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
+```
+複雑そうに見えますがやっていることは単純です。端的に言えばテンプレートの特殊化を利用して `T::TemplateArgs` を `std::tuple<Args...>` にマッチさせ、`T::Template` の引数に `ReplaceType<Args, U, V>...` を代入しています。それを行っているのがヘルパー関数 `ReplaceTypeHelper` で、`ReplaceTypeImplementation` 本体では `T` が `U` に一致するか確認した後、残りの処理を `ReplaceTypeHelper` に投げています。  
+再帰の終了条件については、`T` が `U` に一致しているとき `V` が返って終了するのはもちろん、`T` のテンプレート引数が空であるときも `T` 自身が返ることを容易に確認できます。
+
+### 6.2. 基底クラス
+
+```cpp
+class VarBase {};
+
+template <class T>
+concept VarType = std::is_base_of_v<VarBase, T>;
+
+class BoundVarBase : VarBase {};
+
+template <class T>
+concept BoundVarType = std::is_base_of_v<BoundVarBase, T>;
+
+class FreeVarBase : VarBase {};
+
+template <class T>
+concept FreeVarType = std::is_base_of_v<FreeVarBase, T>;
+
+template <class T>
+concept TakeSome = FreeVarType<T>;
+
+template <class T>
+concept TakeAny = FreeVarType<T>;
+```
 
 
 ## 7. 述語論理の証明例
