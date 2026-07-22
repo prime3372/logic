@@ -9,7 +9,9 @@ consteval Equiv<NotAll<x, Px>, Exist<x, NotPx>> solve() {
     return {
         [&](NotAll<x, Px> notall_x_px) -> Exist<x, NotPx> {
             return Or<Exist<x, NotPx>, NotExist<x, NotPx>>().elim(
-                [&](Exist<x, NotPx> exist_x_not_px) -> Exist<x, NotPx> { return exist_x_not_px; },
+                [&](Exist<x, NotPx> exist_x_not_px) -> Exist<x, NotPx> {
+                    return exist_x_not_px;
+                },
                 [&](NotExist<x, NotPx> notexist_x_not_px) -> Exist<x, NotPx> {
                     return notall_x_px(
                         [&]<TakeAny a>() -> P<a> {
