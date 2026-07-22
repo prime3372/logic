@@ -29,6 +29,9 @@ public:
         return PropBase::object<P>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval False() : initialized(true) {}
@@ -52,6 +55,9 @@ public:
         return PropBase::object<False>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval Not() : initialized(true) {}
@@ -70,6 +76,9 @@ public:
 
     const P left = PropBase::object<P>;
     const Q right = PropBase::object<Q>;
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
@@ -96,6 +105,9 @@ public:
         return PropBase::object<decltype(rf)>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
@@ -118,6 +130,9 @@ public:
     consteval Q operator()(P) const {
         return PropBase::object<Q>;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
@@ -146,6 +161,9 @@ public:
         return PropBase::object<P>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
@@ -160,6 +178,9 @@ public:
     consteval Prop(const Prop& other) {
         initialized = other.initialized;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;

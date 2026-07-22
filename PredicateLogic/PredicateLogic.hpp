@@ -242,6 +242,9 @@ public:
     template <FreeVarType a>
     consteval ReplaceType<P, x, a> elim() { return PropBase::object<ReplaceType<P, x, a>>; }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     class t final : FreeVarBase {
     public:
@@ -279,6 +282,9 @@ public:
         auto q(f.template operator()<t>(PropBase::object<ReplaceType<P, x, t>>));
         return PropBase::object<decltype(q)>;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     class t : FreeVarBase {
