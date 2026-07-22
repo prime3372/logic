@@ -58,6 +58,9 @@ public:
         return PropBase::object<P>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval False() : initialized(true) {}
@@ -84,6 +87,9 @@ public:
     consteval False operator()(P) const {
         return PropBase::object<False>;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
@@ -137,6 +143,9 @@ public:
         return PropBase::object<decltype(rf)>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval Or() : initialized(true) {}
@@ -163,6 +172,9 @@ public:
     consteval Q operator()(P) const {
         return PropBase::object<Q>;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
@@ -196,6 +208,9 @@ public:
         return PropBase::object<P>;
     }
 
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
+
 private:
     friend class PropBase;
     consteval Equiv() : initialized(true) {}
@@ -214,6 +229,9 @@ public:
     consteval Pred(const Pred& other) {
         initialized = other.initialized;
     }
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 
 private:
     friend class PropBase;
@@ -311,5 +329,9 @@ public:
     template <class _ = void>
     using Template = Bound;
     using TemplateArgs = std::tuple<>;
+
     consteval Bound() {}
+
+    static void* operator new(size_t) = delete;
+    static void* operator new[](size_t) = delete;
 };
