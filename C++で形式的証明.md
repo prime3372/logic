@@ -628,7 +628,7 @@ $$\frac{\begin{array}{c}P(t/x)\end{array}}{\exist xP}$$
 - **$\exist$ 除去則**
 $$\frac{\begin{array}{cc} & P(a/x) \\ & \vdots \\ \exist xP & Q \end{array}}{Q}$$
 
-$\forall$ 導入則および $\exist$ 除去則中の $a$ は固有変数条件を満たします。すなわち、次の条件が成り立つものとします。
+$\forall$ 導入則および $\exist$ 除去則中の $a$ は固有変数条件を満たすものとします。すなわち、次の条件が成り立つものとします。
 - $\forall$ 導入の場合：$a$ は $P(a / x)$ が依存する前提に自由変数として現れない．
 - $\exist$ 除去の場合：$a$ は $Q$ が依存する $P(a / x)$ 以外の前提に自由変数として現れない．
 
@@ -897,7 +897,7 @@ public:
 
 #### 6.8.2. 束縛変数に重複がある命題について
 
-例えば `All<x, Exist<x, P<x>>>` のような束縛変数に重複がある命題はコンストラクタを呼ぼうとしてもエラーになります。`All` 内部で `ReplaceType<Exist<x, P<x>>, x, a>` が呼ばれますが、`Exist` の第一テンプレート引数は `x` に一致しているため、自由変数 `a` を `Exist` の第一テンプレート引数に代入することになり、テンプレートパラメータ制約に違反します。
+例えば `All<x, Exist<x, P<x>>>` のような束縛変数に重複がある命題は、コンストラクタを呼ぼうとするとちゃんとエラーになります。`All` 内部で `ReplaceType<Exist<x, P<x>>, x, a>` が呼ばれますが、`Exist` の第一テンプレート引数は `x` に一致しているので自由変数 `a` を `Exist` の第一テンプレート引数に代入することになり、テンプレートパラメータ制約に違反するためです。
 ```cpp
 template <BoundVarType x, PropType P>
 class Exist final : PropBase {
