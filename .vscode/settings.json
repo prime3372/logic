@@ -12,5 +12,8 @@
   "files.autoSaveDelay": 500,
   "git.confirmSync": false,
   "git.suggestSmartCommit": false,
-  "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "markdown-pdf.styles": [
+    "C:\\logic\\.vscode\\markdown-pdf.css"
+  ],
+  "terminal.integrated.enableMultiLinePasteWarning": "never"
 }
