@@ -298,8 +298,7 @@ public:
     }
 
     consteval auto elim(auto f) {
-        auto q = f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
-        return q;
+        return f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
     }
 
     static void* operator new(size_t) = delete;
