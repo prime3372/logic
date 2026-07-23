@@ -32,7 +32,7 @@
     - **6.8. 補足**
 - **7. 述語論理の証明例**
     - **7.1. ド・モルガンの法則 (述語論理版)**
-    - **7.2. $\forall$ と $\exist$ の順序交換**
+    - **7.2. $\exist$ と $\forall$ の順序交換**
 - **8. 実装の全体像**
 - **9. アピールポイント**
 
@@ -40,7 +40,7 @@
 
 本レポートでは述語論理の形式的証明ツールをC\+\+で実装します。形式的証明のコンパイラをC\+\+で書くという意味ではなく、C\+\+の言語機能をそのまま形式的証明の文法に利用し、C\+\+のコードとして形式的証明をコンパイルすることを目指します。正しい証明に対してコンパイルが通るようにすることはもちろん、常識的な範囲の間違いを含む証明に対してコンパイルエラーを出すことも目標にします。
 
-述語論理自体は講義で直接扱われてはいませんが、講義に登場した集合、写像、関係、濃度といった概念は、すべて述語論理の厳密な定式化の下で成り立っています。実際、「任意の・・・」「・・・が存在する」という言い回しなど、講義でも述語論理の概念が暗黙的に使われている場面が多数ありました。したがって、述語論理を講義で扱われた概念の一つとして認めてよいと考えています。
+述語論理自体は講義で直接扱われてはいませんが、講義に登場した集合、写像、関係、濃度といった概念は、すべて述語論理の厳密な定式化の下で成り立っています。また、「任意の・・・」「・・・が存在する」という言い回しなど、述語論理の概念が暗黙的に使われている場面も多数ありました。したがって、述語論理も講義で扱われた概念の一つとして認めてよいと考えています。
 
 本レポートで提示するコードの動作確認はすべてg\+\+で行っています。他の環境で動くかは確かめていません。  
 実際にコードを動かすときは次のコンパイルオプションを付けてください。
@@ -99,7 +99,7 @@
 | 仮定する | 仮定を引数として受け取るラムダ式を定義する |
 | 仮定付きで証明する | 仮定を引数として受け取るラムダ式から目的の命題を返す |
 
-この対応関係の下で、論理記号 $\bot, \lnot,\land,\lor,\to,\leftrightarrow$ を以下のように実装することにします。
+この対応関係の下で、論理記号 $\bot, \lnot,\land,\lor,\to,\leftrightarrow$ を以下のようなクラスとして実装することにします。
 
 | 論理記号 | コンストラクタ | メンバ |
 | ------ | ----- | ----- |
@@ -136,7 +136,7 @@ protected:
 
 `PropType` は命題クラスを表すコンセプトです。`std::is_base_of_v` を用いて `PropBase` の派生クラスであるか判定しています。
 
-※ `PropBase()` に付いている `consteval` はコンパイル時評価を強制するための修飾子です。`constexpr` と異なり、コンパイル時評価できなかった場合にはエラーが出ます。本レポートの形式的証明ツールはコンパイルのみで完結するので、すべての関数に例外なく `consteval` を付けています。
+`PropBase()` に付いている `consteval` はコンパイル時評価を強制するための修飾子です。`constexpr` と異なり、コンパイル時評価できなかった場合にはエラーが出ます。本レポートの形式的証明ツールはコンパイルのみで完結するので、すべての関数に例外なく `consteval` を付けています。
 
 ### 3.3. `False`
 
@@ -191,7 +191,7 @@ private:
 template <class P>
 using Not = Impl<P, False>
 ```
-ただし、間違った証明を書いたとき、エラーメッセージではエイリアスが元の名前に展開されるので、ただでさえ読みにくいエラーメッセージがさらに読みにくくなってしまいます。本レポートではこれを避けるためエイリアスを積極的には使っていません。
+しかしながら、間違った証明を書いたとき、エラーメッセージではエイリアスが元の名前に展開されるので、ただでさえ読みにくいエラーメッセージがさらに読みにくくなってしまいます。本レポートではこれを避けるためエイリアスを積極的には使っていません。
 
 ### 3.5. `And`
 
@@ -423,7 +423,9 @@ consteval False solve() {
             std::construct_at(std::addressof(fake.fal), fal);
             return fal;
         },
-        [&](Not<False> not_fal) -> Or<False, Not<False>> { return not_fal; }
+        [&](Not<False> not_fal) -> Or<False, Not<False>> {
+            return not_fal;
+        }
     );
     return fake.fal;
 }
@@ -703,7 +705,7 @@ public:
 template <class T, class U, class V>
 using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
 ```
-複雑そうに見えますがやっていることは単純です。ヘルパー関数 `ReplaceTypeHelper` では、テンプレートの特殊化を利用して `T::TemplateArgs` を `std::tuple<Args...>` にマッチさせ、`T::Template` の引数に `ReplaceType<Args, U, V>...` を代入しています。`ReplaceTypeImplementation` 本体では、`T` が `U` に一致するか確認した後、残りの処理を `ReplaceTypeHelper` に投げています。`ReplaceType<T, U, V>` は `ReplaceTypeImplementation<T, U, V>::type` のエイリアスです。  
+ヘルパー関数 `ReplaceTypeHelper` では、テンプレートの特殊化を利用して `T::TemplateArgs` を `std::tuple<Args...>` にマッチさせ、`T::Template` の引数に `ReplaceType<Args, U, V>...` を代入しています。`ReplaceTypeImplementation` 本体では、`T` が `U` に一致するか確認した後、残りの処理を `ReplaceTypeHelper` に投げています。`ReplaceType<T, U, V>` は `ReplaceTypeImplementation<T, U, V>::type` のエイリアスです。  
 再帰の終了条件についてですが、`T` が `U` に一致しているとき `V` が返って終了するのはもちろん、`T` のテンプレート引数が空であるときも `T` 自身が返ることを容易に確認できます。
 
 ### 6.3. 基底クラス
@@ -749,7 +751,7 @@ public:
     }
 
     template <FreeVarType t>
-    consteval ReplaceType<P, x, t> elim() {
+    consteval ReplaceType<P, x, t> elim() const {
         return PropBase::object<ReplaceType<P, x, t>>;
     }
 
@@ -795,7 +797,7 @@ public:
         initialized = other.initialized;
     }
 
-    consteval auto elim(auto f) {
+    consteval auto elim(auto f) const {
         return f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
     }
 
@@ -987,7 +989,7 @@ int main() {
 }
 ```
 
-### 7.2. $\forall$ と $\exist$ の順序交換
+### 7.2. $\exist$ と $\forall$ の順序交換
 $\exist x\forall y P(x, y)\to\forall y\exist xP(x, y)$
 ```cpp
 template <class x, class y> using P = Pred<0, x, y>;
@@ -1013,7 +1015,8 @@ int main() {
 
 ## 8. 実装の全体像
 
-完成した述語論理の形式的証明ツールを以下に示します。
+完成した述語論理の形式的証明ツールを以下に示します。  
+※命題論理の実装と互換性があるので、4節で示した命題論理の証明例も以下と一緒にコンパイルできます。
 ```cpp
 #pragma once
 
@@ -1277,7 +1280,7 @@ public:
     }
 
     template <FreeVarType t>
-    consteval ReplaceType<P, x, t> elim() {
+    consteval ReplaceType<P, x, t> elim() const {
         return PropBase::object<ReplaceType<P, x, t>>;
     }
 
@@ -1314,9 +1317,8 @@ public:
         initialized = other.initialized;
     }
 
-    consteval auto elim(auto f) {
-        auto q = f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
-        return q;
+    consteval auto elim(auto f) const {
+        return f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
     }
 
     static void* operator new(size_t) = delete;
@@ -1376,3 +1378,4 @@ public:
 
 ## 9. アピールポイント
 
+C\+\+のラムダ式はHaskellなどの純粋関数型プログラミング言語に見られるものほど柔軟ではないため、形式的証明の文法に組み入れるのはかなり苦戦しましたが、C\+\+の強力なテンプレートプログラミングとコンパイル時実行機能を駆使し、なんとか述語論理の形式的証明までたどり着くことができました。本レポートを通して、C\+\+のポテンシャルを再確認することができたと思います。

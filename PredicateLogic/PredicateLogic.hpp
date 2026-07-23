@@ -260,7 +260,7 @@ public:
     }
 
     template <FreeVarType t>
-    consteval ReplaceType<P, x, t> elim() {
+    consteval ReplaceType<P, x, t> elim() const {
         return PropBase::object<ReplaceType<P, x, t>>;
     }
 
@@ -297,7 +297,7 @@ public:
         initialized = other.initialized;
     }
 
-    consteval auto elim(auto f) {
+    consteval auto elim(auto f) const {
         return f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
     }
 
