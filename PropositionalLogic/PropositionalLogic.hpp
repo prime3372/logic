@@ -102,7 +102,7 @@ public:
         auto rf = f(PropBase::object<P>);
         auto rg = g(PropBase::object<Q>);
         static_assert(std::same_as<decltype(rf), decltype(rg)>);
-        return PropBase::object<decltype(rf)>;
+        return rf;
     }
 
     static void* operator new(size_t) = delete;

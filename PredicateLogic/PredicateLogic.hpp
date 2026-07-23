@@ -6,7 +6,32 @@
 #include <tuple>
 #include <utility>
 
-#include "TypeUtil.hpp"
+
+template <class T, class U, class V>
+class ReplaceTypeImplementation;
+
+template <template <class...> class Template, class TemplateArgs, class U, class V>
+class ReplaceTypeHelper {};
+
+template <template <class...> class Template, class U, class V, class... Args>
+class ReplaceTypeHelper<Template, std::tuple<Args...>, U, V> {
+public:
+    using result = Template<typename ReplaceTypeImplementation<Args, U, V>::result...>;
+};
+
+template <class T, class U, class V>
+class ReplaceTypeImplementation {
+public:
+    using result =
+        std::conditional_t<
+            std::same_as<T, U>,
+            V,
+            typename ReplaceTypeHelper<T::template Template, typename T::TemplateArgs, U, V>::result
+        >;
+};
+
+template <class T, class U, class V>
+using ReplaceType = typename ReplaceTypeImplementation<T, U, V>::result;
 
 
 class PropBase;
@@ -139,7 +164,7 @@ public:
         auto rf = f(PropBase::object<P>);
         auto rg = g(PropBase::object<Q>);
         static_assert(std::same_as<decltype(rf), decltype(rg)>);
-        return PropBase::object<decltype(rf)>;
+        return rf;
     }
 
     static void* operator new(size_t) = delete;
@@ -226,29 +251,29 @@ public:
     using TemplateArgs = std::tuple<x, P>;
 
     consteval All(auto f) {
-        auto p = f.template operator()<t>();
-        static_assert(std::same_as<decltype(p), ReplaceType<P, x, t>>);
+        auto p = f.template operator()<a>();
+        static_assert(std::same_as<decltype(p), ReplaceType<P, x, a>>);
         initialized = true;
     }
     consteval All(const All& other) {
         initialized = other.initialized;
     }
 
-    template <FreeVarType a>
-    consteval ReplaceType<P, x, a> elim() {
-        return PropBase::object<ReplaceType<P, x, a>>;
+    template <FreeVarType t>
+    consteval ReplaceType<P, x, t> elim() {
+        return PropBase::object<ReplaceType<P, x, t>>;
     }
 
     static void* operator new(size_t) = delete;
     static void* operator new[](size_t) = delete;
 
 private:
-    class t final : FreeVarBase {
+    class a final : FreeVarBase {
     public:
         template <class _ = void>
-        using Template = t;
+        using Template = a;
         using TemplateArgs = std::tuple<>;
-        consteval t() {}
+        consteval a() {}
     };
 
     friend class PropBase;
@@ -265,28 +290,28 @@ public:
     using Template = Exist<t, T>;
     using TemplateArgs = std::tuple<x, P>;
 
-    template <FreeVarType a>
-    consteval Exist(a, ReplaceType<P, x, a>) : initialized(true) {}
+    template <FreeVarType t>
+    consteval Exist(t, ReplaceType<P, x, t>) : initialized(true) {}
 
     consteval Exist(const Exist& other) {
         initialized = other.initialized;
     }
 
     consteval auto elim(auto f) {
-        auto q = f.template operator()<t>(PropBase::object<ReplaceType<P, x, t>>);
-        return PropBase::object<decltype(q)>;
+        auto q = f.template operator()<a>(PropBase::object<ReplaceType<P, x, a>>);
+        return q;
     }
 
     static void* operator new(size_t) = delete;
     static void* operator new[](size_t) = delete;
 
 private:
-    class t : FreeVarBase {
+    class a : FreeVarBase {
     public:
         template <class _ = void>
-        using Template = t;
+        using Template = a;
         using TemplateArgs = std::tuple<>;
-        consteval t() {}
+        consteval a() {}
     };
 
     friend class PropBase;
@@ -317,6 +342,9 @@ private:
     bool initialized;
 };
 
+template <size_t id>
+using Prop = Pred<id>;
+
 
 template <size_t id>
 class Bound final : BoundVarBase {
@@ -326,7 +354,4 @@ public:
     using TemplateArgs = std::tuple<>;
 
     consteval Bound() {}
-
-    static void* operator new(size_t) = delete;
-    static void* operator new[](size_t) = delete;
 };
