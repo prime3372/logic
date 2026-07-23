@@ -257,9 +257,6 @@ private:
     bool initialized;
 };
 
-template <BoundVarType x, PropType P>
-using NotAll = Not<All<x, P>>;
-
 
 template <BoundVarType x, PropType P>
 class Exist final : PropBase {
@@ -297,9 +294,6 @@ private:
 
     bool initialized;
 };
-
-template <BoundVarType x, PropType P>
-using NotExist = Not<Exist<x, P>>;
 
 
 template <size_t id, VarType... P>

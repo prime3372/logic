@@ -1,5 +1,7 @@
 #include "PredicateLogic.hpp"
 
+template <class x, class P> using NotAll = Not<All<x, P>>;
+template <class x, class P> using NotExist = Not<Exist<x, P>>;
 template <class x> using P = Pred<0, x>;
 template <class x> using NotP = Not<P<x>>;
 using x = Bound<0>;
