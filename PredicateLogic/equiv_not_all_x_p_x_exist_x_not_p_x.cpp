@@ -8,13 +8,13 @@ using x = Bound<0>;
 
 consteval Equiv<NotAll<x, P<x>>, Exist<x, NotP<x>>> solve() {
     return {
-        [&](NotAll<x, P<x>> notall_x_p_x) -> Exist<x, NotP<x>> {
+        [&](NotAll<x, P<x>> not_all_x_p_x) -> Exist<x, NotP<x>> {
             return Or<Exist<x, NotP<x>>, NotExist<x, NotP<x>>>().elim(
                 [&](Exist<x, NotP<x>> exist_x_not_p_x) -> Exist<x, NotP<x>> {
                     return exist_x_not_p_x;
                 },
                 [&](NotExist<x, NotP<x>> not_exist_x_not_p_x) -> Exist<x, NotP<x>> {
-                    return notall_x_p_x(
+                    return not_all_x_p_x(
                         [&]<class a>() -> P<a> {
                             return Or<P<a>, NotP<a>>().elim(
                                 [&](P<a> p_a) -> P<a> { return p_a; },

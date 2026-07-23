@@ -10,7 +10,9 @@ consteval Equiv<NotExist<x, P<x>>, All<x, NotP<x>>> solve() {
     return {
         [&](NotExist<x, P<x>> not_exist_x_p_x) -> All<x, NotP<x>> {
             return [&]<class a>() -> NotP<a> {
-                return [&](P<a> p_a) -> False { return not_exist_x_p_x({a(), p_a}); };
+                return [&](P<a> p_a) -> False {
+                    return not_exist_x_p_x({a(), p_a});
+                };
             };
         },
         [&](All<x, NotP<x>> all_x_not_p_x) -> NotExist<x, P<x>> {
